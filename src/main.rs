@@ -2,6 +2,7 @@ use color::Color;
 
 mod color;
 mod point3;
+mod ray;
 mod vec3;
 
 fn main() {
