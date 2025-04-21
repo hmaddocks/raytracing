@@ -1,6 +1,7 @@
 use color::Color;
 
 mod color;
+mod point3;
 mod vec3;
 
 fn main() {
