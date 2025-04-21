@@ -5,22 +5,23 @@ use std::ops::{Add, Sub};
 pub struct Point3(Vec3);
 
 impl Point3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Point3 {
+    #[inline]
+    pub const fn new(x: f64, y: f64, z: f64) -> Point3 {
         Point3(Vec3::new(x, y, z))
     }
 
     #[inline]
-    pub fn x(&self) -> f64 {
+    pub const fn x(&self) -> f64 {
         self.0.x()
     }
 
     #[inline]
-    pub fn y(&self) -> f64 {
+    pub const fn y(&self) -> f64 {
         self.0.y()
     }
 
     #[inline]
-    pub fn z(&self) -> f64 {
+    pub const fn z(&self) -> f64 {
         self.0.z()
     }
 }
@@ -28,6 +29,7 @@ impl Point3 {
 impl Add<Vec3> for Point3 {
     type Output = Point3;
 
+    #[inline]
     fn add(self, other: Vec3) -> Point3 {
         Point3::new(
             self.0.x() + other.x(),
@@ -41,6 +43,7 @@ impl Add<Vec3> for Point3 {
 impl Add<Point3> for Point3 {
     type Output = Point3;
 
+    #[inline]
     fn add(self, _other: Point3) -> Point3 {
         panic!("Cannot add two Point3 values together: operation is undefined.");
     }
@@ -49,6 +52,7 @@ impl Add<Point3> for Point3 {
 impl Sub<Vec3> for Point3 {
     type Output = Point3;
 
+    #[inline]
     fn sub(self, other: Vec3) -> Point3 {
         Point3::new(
             self.0.x() - other.x(),
@@ -62,6 +66,7 @@ impl Sub<Vec3> for Point3 {
 impl Sub for &Point3 {
     type Output = Vec3;
 
+    #[inline]
     fn sub(self, other: &Point3) -> Vec3 {
         Vec3::new(
             self.x() - other.x(),

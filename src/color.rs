@@ -6,7 +6,8 @@ use std::ops::{Add, Mul};
 pub struct Color(Vec3);
 
 impl Color {
-    pub fn new(r: f64, g: f64, b: f64) -> Color {
+    #[inline]
+    pub const fn new(r: f64, g: f64, b: f64) -> Color {
         Color(Vec3::new(r, g, b))
     }
 

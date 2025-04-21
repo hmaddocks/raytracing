@@ -16,19 +16,19 @@ impl Vec3 {
 
     /// X component.
     #[inline]
-    pub fn x(&self) -> f64 {
+    pub const fn x(&self) -> f64 {
         self.e[0]
     }
 
     /// Y component.
     #[inline]
-    pub fn y(&self) -> f64 {
+    pub const fn y(&self) -> f64 {
         self.e[1]
     }
 
     /// Z component.
     #[inline]
-    pub fn z(&self) -> f64 {
+    pub const fn z(&self) -> f64 {
         self.e[2]
     }
 
@@ -81,6 +81,7 @@ impl Default for Vec3 {
 impl Add for Vec3 {
     type Output = Vec3;
 
+    #[inline]
     fn add(self, other: Vec3) -> Vec3 {
         Vec3::new(
             self.e[0] + other.e[0],
@@ -93,6 +94,7 @@ impl Add for Vec3 {
 impl Sub for Vec3 {
     type Output = Vec3;
 
+    #[inline]
     fn sub(self, other: Vec3) -> Vec3 {
         Vec3::new(
             self.e[0] - other.e[0],
@@ -105,6 +107,7 @@ impl Sub for Vec3 {
 impl Neg for Vec3 {
     type Output = Vec3;
 
+    #[inline]
     fn neg(self) -> Vec3 {
         Vec3::new(-self.e[0], -self.e[1], -self.e[2])
     }
@@ -113,6 +116,7 @@ impl Neg for Vec3 {
 impl Mul<f64> for Vec3 {
     type Output = Vec3;
 
+    #[inline]
     fn mul(self, other: f64) -> Vec3 {
         Vec3::new(self.e[0] * other, self.e[1] * other, self.e[2] * other)
     }
@@ -121,6 +125,7 @@ impl Mul<f64> for Vec3 {
 impl Div<f64> for Vec3 {
     type Output = Vec3;
 
+    #[inline]
     fn div(self, other: f64) -> Vec3 {
         Vec3::new(self.e[0] / other, self.e[1] / other, self.e[2] / other)
     }
@@ -129,6 +134,7 @@ impl Div<f64> for Vec3 {
 impl Mul<Vec3> for f64 {
     type Output = Vec3;
 
+    #[inline]
     fn mul(self, other: Vec3) -> Vec3 {
         Vec3::new(self * other.e[0], self * other.e[1], self * other.e[2])
     }
@@ -137,6 +143,7 @@ impl Mul<Vec3> for f64 {
 impl Mul for Vec3 {
     type Output = Vec3;
 
+    #[inline]
     fn mul(self, other: Vec3) -> Vec3 {
         Vec3::new(
             self.e[0] * other.e[0],
@@ -149,12 +156,14 @@ impl Mul for Vec3 {
 impl Index<usize> for Vec3 {
     type Output = f64;
 
+    #[inline]
     fn index(&self, index: usize) -> &f64 {
         &self.e[index]
     }
 }
 
 impl IndexMut<usize> for Vec3 {
+    #[inline]
     fn index_mut(&mut self, index: usize) -> &mut f64 {
         &mut self.e[index]
     }
