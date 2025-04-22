@@ -8,30 +8,23 @@ mod point3;
 mod ray;
 mod vec3;
 
-//     vec3 oc = center - r.origin();
-//     auto a = dot(r.direction(), r.direction());
-//     auto b = -2.0 * dot(r.direction(), oc);
-//     auto c = dot(oc, oc) - radius*radius;
-//     auto discriminant = b*b - 4*a*c;
-//     return (discriminant >= 0);
-// }
-
 fn hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> Option<f64> {
     let oc = center - ray.origin();
-    let a = ray.direction().dot(ray.direction());
-    let b = -2.0 * ray.direction().dot(&oc);
-    let c = oc.dot(&oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
+    let a = ray.direction().length_squared();
+    let h = oc.dot(&ray.direction());
+    let c = oc.length_squared() - radius * radius;
+    let discriminant = h * h - a * c;
+
     if discriminant < 0.0 {
         None
     } else {
-        Some((-b - discriminant.sqrt()) / (2.0 * a))
+        Some((h - discriminant.sqrt()) / a)
     }
 }
 
 fn ray_color(r: &Ray) -> Color {
     if let Some(t) = hit_sphere(&Point3::new(0.0, 0.0, -1.0), 0.5, r) {
-let n: Vec3 = (r.at(t) - Point3::new(0.0, 0.0, -1.0)).unit();
+        let n: Vec3 = (r.at(t) - Point3::new(0.0, 0.0, -1.0)).unit();
         Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0) * 0.5
     } else {
         let unit_direction = r.direction().unit();
@@ -63,7 +56,8 @@ fn main() {
         - (view_port_v / 2.0).as_vec3();
     let viewport_upper_left: Point3 = viewport_upper_left_vec.into();
 
-    let pixel00_loc = viewport_upper_left + 0.5 * pixel_delta_u.as_vec3() + 0.5 * pixel_delta_v.as_vec3();
+    let pixel00_loc =
+        viewport_upper_left + 0.5 * pixel_delta_u.as_vec3() + 0.5 * pixel_delta_v.as_vec3();
 
     println!("P3");
     println!("{} {}", image_width, image_height);
@@ -72,7 +66,8 @@ fn main() {
     for j in 0..image_height {
         eprint!("\rScanlines remaining: {}             ", image_height - j);
         for i in 0..image_width {
-            let pixel_center: Point3 = pixel00_loc + pixel_delta_u * i as f64 + pixel_delta_v * j as f64;
+            let pixel_center: Point3 =
+                pixel00_loc + pixel_delta_u * i as f64 + pixel_delta_v * j as f64;
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
 
