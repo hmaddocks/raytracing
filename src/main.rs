@@ -4,6 +4,7 @@ use ray::Ray;
 use vec3::Vec3;
 
 mod color;
+mod hittable;
 mod point3;
 mod ray;
 mod sphere;

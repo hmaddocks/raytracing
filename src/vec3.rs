@@ -104,7 +104,7 @@ impl Sub for Vec3 {
     }
 }
 
-impl Neg for Vec3 {
+impl Neg for &Vec3 {
     type Output = Vec3;
 
     #[inline]
@@ -218,7 +218,7 @@ mod tests {
     #[test]
     fn test_vec3_neg() {
         let v = Vec3::new(1.0, 2.0, 3.0);
-        let result = -v;
+        let result = -&v;
         assert_eq!(result.x(), -1.0);
         assert_eq!(result.y(), -2.0);
         assert_eq!(result.z(), -3.0);
