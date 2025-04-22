@@ -1,5 +1,6 @@
 use crate::hittable::HitRecord;
 use crate::hittable::Hittable;
+use crate::interval::Interval;
 use crate::point3::Point3;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
@@ -17,13 +18,13 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord> {
-        let oc = self.center - r.origin();
+    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
+        let oc = r.origin() - self.center;
         let a = r.direction().length_squared();
-        let h = oc.dot(&r.direction());
+        let half_b = oc.dot(&r.direction());
         let c = oc.length_squared() - self.radius * self.radius;
 
-        let discriminant = h * h - a * c;
+        let discriminant = half_b * half_b - a * c;
 
         if discriminant < 0.0 {
             return None;
@@ -32,10 +33,10 @@ impl Hittable for Sphere {
         let sqrt_discriminant = discriminant.sqrt();
 
         // Find the nearest root in the range [ray_tmin, ray_tmax]
-        let mut root = (h - sqrt_discriminant) / a;
-        if root <= ray_tmin || ray_tmax <= root {
-            root = (h + sqrt_discriminant) / a;
-            if root <= ray_tmin || ray_tmax <= root {
+        let mut root = (-half_b - sqrt_discriminant) / a;
+        if !ray_t.contains(root) {
+            root = (-half_b + sqrt_discriminant) / a;
+            if !ray_t.contains(root) {
                 return None;
             }
         }
@@ -46,7 +47,8 @@ impl Hittable for Sphere {
             normal: Vec3::default(),
             front_face: true,
         };
-        let outward_normal = (r.at(root) - self.center) / self.radius;
+
+        let outward_normal = (hit_record.p - self.center) / self.radius;
         hit_record.set_face_normal(r, &outward_normal);
         Some(hit_record)
     }
@@ -66,7 +68,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Check if the ray hits the sphere
-        let hit_record = sphere.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should hit the sphere
         assert!(hit_record.is_some());
@@ -97,7 +99,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 1.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Check if the ray hits the sphere
-        let hit_record = sphere.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should hit the sphere
         assert!(hit_record.is_some());
@@ -117,7 +119,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 2.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Check if the ray hits the sphere
-        let hit_record = sphere.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should miss the sphere
         assert!(hit_record.is_none());
@@ -132,7 +134,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Check if the ray hits the sphere
-        let hit_record = sphere.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should hit the sphere
         assert!(hit_record.is_some());
@@ -151,7 +153,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
 
         // Check if the ray hits the sphere
-        let hit_record = sphere.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should miss the sphere since it's pointing away
         assert!(hit_record.is_none());
@@ -168,7 +170,7 @@ mod tests {
         // The ray hits at t=4 (front) and t=6 (back)
 
         // Check with t_min > front hit point but < back hit point
-        let hit_record = sphere.hit(&ray, 5.0, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, Interval::new(5.0, f64::INFINITY));
 
         // The ray should still hit the sphere at the back intersection (t=6)
         assert!(hit_record.is_some());
@@ -176,13 +178,13 @@ mod tests {
         assert!((hit.t - 6.0).abs() < 1e-6);
 
         // Check with t_max < both hit points
-        let hit_record = sphere.hit(&ray, 0.001, 3.0);
+        let hit_record = sphere.hit(&ray, Interval::new(0.001, 3.0));
 
         // The ray should miss the sphere due to t_max constraint
         assert!(hit_record.is_none());
 
         // Check with t_min > both hit points
-        let hit_record = sphere.hit(&ray, 7.0, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, Interval::new(7.0, f64::INFINITY));
 
         // The ray should miss the sphere due to t_min constraint
         assert!(hit_record.is_none());

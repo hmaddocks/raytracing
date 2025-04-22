@@ -1,5 +1,6 @@
 use crate::hittable::HitRecord;
 use crate::hittable::Hittable;
+use crate::interval::Interval;
 use crate::ray::Ray;
 
 pub struct HittableList {
@@ -17,13 +18,13 @@ impl HittableList {
         self.objects.push(object);
     }
 
-    pub fn hit(&self, r: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord> {
+    pub fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
         let mut hit_record = None;
-        let mut closest_so_far = ray_tmax;
+        let mut closest_so_far = ray_t.max;
 
         // Iterate through all objects and find the closest hit
         for object in &self.objects {
-            if let Some(hit) = object.hit(r, ray_tmin, closest_so_far) {
+            if let Some(hit) = object.hit(r, Interval::new(ray_t.min, closest_so_far)) {
                 closest_so_far = hit.t;
                 hit_record = Some(hit);
             }
@@ -46,7 +47,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
 
         // An empty list should not hit anything
-        let hit_record = list.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
         assert!(hit_record.is_none());
     }
 
@@ -61,7 +62,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Check if the ray hits the list
-        let hit_record = list.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should hit the sphere
         assert!(hit_record.is_some());
@@ -89,7 +90,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Check if the ray hits the list
-        let hit_record = list.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should hit the list
         assert!(hit_record.is_some());
@@ -117,7 +118,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Check if the ray hits the list
-        let hit_record = list.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should hit the list
         assert!(hit_record.is_some());
@@ -146,7 +147,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Test with t_min that excludes the closer sphere
-        let hit_record = list.hit(&ray, 3.0, f64::INFINITY);
+        let hit_record = list.hit(&ray, Interval::new(3.0, f64::INFINITY));
 
         // The ray should still hit the farther sphere
         assert!(hit_record.is_some());
@@ -159,7 +160,7 @@ mod tests {
         assert!((hit.t - 4.0).abs() < 1e-6); // t should equal the z-coordinate in this case
 
         // Test with t_max that excludes both spheres
-        let hit_record = list.hit(&ray, 0.001, 1.0);
+        let hit_record = list.hit(&ray, Interval::new(0.001, 1.0));
 
         // The ray should not hit anything
         assert!(hit_record.is_none());
@@ -177,7 +178,7 @@ mod tests {
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
 
         // Check if the ray hits the list
-        let hit_record = list.hit(&ray, 0.001, f64::INFINITY);
+        let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
 
         // The ray should not hit anything
         assert!(hit_record.is_none());

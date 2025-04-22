@@ -1,5 +1,6 @@
 use crate::color::Color;
 use crate::hittable_list::HittableList;
+use crate::interval::Interval;
 use crate::point3::Point3;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
@@ -7,13 +8,14 @@ use crate::sphere::Sphere;
 mod color;
 mod hittable;
 mod hittable_list;
+mod interval;
 mod point3;
 mod ray;
 mod sphere;
 mod vec3;
 
 fn ray_color(r: &Ray, world: &HittableList) -> Color {
-    if let Some(hit_record) = world.hit(r, 0.001, f64::INFINITY) {
+    if let Some(hit_record) = world.hit(r, Interval::new(0.001, f64::INFINITY)) {
         (Color::new(1.0, 1.0, 1.0)
             + Color::new(
                 hit_record.normal.x(),
