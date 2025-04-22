@@ -68,3 +68,104 @@ impl fmt::Display for Color {
         write!(f, "{} {} {}", self.0.x(), self.0.y(), self.0.z())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::f64::EPSILON;
+
+    #[test]
+    fn test_color_new() {
+        let c = Color::new(0.1, 0.2, 0.3);
+        assert!((c.0.x() - 0.1).abs() < EPSILON);
+        assert!((c.0.y() - 0.2).abs() < EPSILON);
+        assert!((c.0.z() - 0.3).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_color_equality() {
+        let c1 = Color::new(0.1, 0.2, 0.3);
+        let c2 = Color::new(0.1, 0.2, 0.3);
+        let c3 = Color::new(0.3, 0.2, 0.1);
+
+        assert_eq!(c1, c2);
+        assert_ne!(c1, c3);
+    }
+
+    #[test]
+    fn test_write_color() {
+        // Test normal values in range [0,1]
+        let c1 = Color::new(0.0, 0.5, 1.0);
+        assert_eq!(c1.write_color(), "0 128 255");
+
+        // Test clamping for values > 1.0
+        let c2 = Color::new(1.5, 0.5, 2.0);
+        assert_eq!(c2.write_color(), "255 128 255");
+
+        // Test clamping for values < 0.0
+        let c3 = Color::new(-0.5, 0.5, -1.0);
+        assert_eq!(c3.write_color(), "0 128 0");
+    }
+
+    #[test]
+    fn test_color_add() {
+        let c1 = Color::new(0.1, 0.2, 0.3);
+        let c2 = Color::new(0.2, 0.3, 0.4);
+        let result = c1 + c2;
+
+        // Using approx_eq for floating point comparison
+        assert!((result.0.x() - 0.3).abs() < EPSILON);
+        assert!((result.0.y() - 0.5).abs() < EPSILON);
+        assert!((result.0.z() - 0.7).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_color_add_assign() {
+        let mut c1 = Color::new(0.1, 0.2, 0.3);
+        let c2 = Color::new(0.2, 0.3, 0.4);
+        c1 += c2;
+
+        // Using approx_eq for floating point comparison
+        assert!((c1.0.x() - 0.3).abs() < EPSILON);
+        assert!((c1.0.y() - 0.5).abs() < EPSILON);
+        assert!((c1.0.z() - 0.7).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_color_mul_scalar() {
+        let c = Color::new(0.1, 0.2, 0.3);
+        let result = c * 2.0;
+
+        let expected = Color::new(0.2, 0.4, 0.6);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_color_mul_assign_scalar() {
+        let mut c = Color::new(0.1, 0.2, 0.3);
+        c *= 2.0;
+
+        let expected = Color::new(0.2, 0.4, 0.6);
+        assert_eq!(c, expected);
+    }
+
+    #[test]
+    fn test_color_display() {
+        let c = Color::new(0.1, 0.2, 0.3);
+        let display_string = format!("{}", c);
+
+        assert_eq!(display_string, "0.1 0.2 0.3");
+    }
+
+    #[test]
+    fn test_color_debug() {
+        let c = Color::new(0.1, 0.2, 0.3);
+        let debug_string = format!("{:?}", c);
+
+        // The debug format includes the struct name and wraps values
+        assert!(debug_string.contains("Color"));
+        assert!(debug_string.contains("0.1"));
+        assert!(debug_string.contains("0.2"));
+        assert!(debug_string.contains("0.3"));
+    }
+}
