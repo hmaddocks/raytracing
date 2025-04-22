@@ -6,6 +6,7 @@ use vec3::Vec3;
 mod color;
 mod point3;
 mod ray;
+mod sphere;
 mod vec3;
 
 fn hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> Option<f64> {
