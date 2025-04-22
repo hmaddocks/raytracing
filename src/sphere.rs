@@ -34,9 +34,9 @@ impl Hittable for Sphere {
 
         // Find the nearest root in the range [ray_tmin, ray_tmax]
         let mut root = (-half_b - sqrt_discriminant) / a;
-        if !ray_t.contains(root) {
+        if !ray_t.surrounds(root) {
             root = (-half_b + sqrt_discriminant) / a;
-            if !ray_t.contains(root) {
+            if !ray_t.surrounds(root) {
                 return None;
             }
         }
