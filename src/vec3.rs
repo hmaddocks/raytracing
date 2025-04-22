@@ -77,12 +77,6 @@ impl Vec3 {
         )
     }
 
-    // /// Returns a random vector.
-    // #[inline]
-    // pub fn random() -> Vec3 {
-    //     Vec3::new(random_double(), random_double(), random_double())
-    // }
-
     /// Returns a random vector in the range [min, max).
     #[inline]
     pub fn random(min: f64, max: f64) -> Vec3 {
@@ -134,16 +128,59 @@ impl Add for Vec3 {
     }
 }
 
-impl Sub for Vec3 {
+impl Div<f64> for Vec3 {
     type Output = Vec3;
 
     #[inline]
-    fn sub(self, other: Vec3) -> Vec3 {
+    fn div(self, other: f64) -> Vec3 {
+        Vec3::new(self.e[0] / other, self.e[1] / other, self.e[2] / other)
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    #[inline]
+    fn index(&self, index: usize) -> &f64 {
+        &self.e[index]
+    }
+}
+
+impl IndexMut<usize> for Vec3 {
+    #[inline]
+    fn index_mut(&mut self, index: usize) -> &mut f64 {
+        &mut self.e[index]
+    }
+}
+
+impl Mul for Vec3 {
+    type Output = Vec3;
+
+    #[inline]
+    fn mul(self, other: Vec3) -> Vec3 {
         Vec3::new(
-            self.e[0] - other.e[0],
-            self.e[1] - other.e[1],
-            self.e[2] - other.e[2],
+            self.e[0] * other.e[0],
+            self.e[1] * other.e[1],
+            self.e[2] * other.e[2],
         )
+    }
+}
+
+impl Mul<f64> for Vec3 {
+    type Output = Vec3;
+
+    #[inline]
+    fn mul(self, other: f64) -> Vec3 {
+        Vec3::new(self.e[0] * other, self.e[1] * other, self.e[2] * other)
+    }
+}
+
+impl Mul<Vec3> for f64 {
+    type Output = Vec3;
+
+    #[inline]
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3::new(self * other.e[0], self * other.e[1], self * other.e[2])
     }
 }
 
@@ -165,59 +202,16 @@ impl Neg for Vec3 {
     }
 }
 
-impl Mul<f64> for Vec3 {
+impl Sub for Vec3 {
     type Output = Vec3;
 
     #[inline]
-    fn mul(self, other: f64) -> Vec3 {
-        Vec3::new(self.e[0] * other, self.e[1] * other, self.e[2] * other)
-    }
-}
-
-impl Div<f64> for Vec3 {
-    type Output = Vec3;
-
-    #[inline]
-    fn div(self, other: f64) -> Vec3 {
-        Vec3::new(self.e[0] / other, self.e[1] / other, self.e[2] / other)
-    }
-}
-
-impl Mul<Vec3> for f64 {
-    type Output = Vec3;
-
-    #[inline]
-    fn mul(self, other: Vec3) -> Vec3 {
-        Vec3::new(self * other.e[0], self * other.e[1], self * other.e[2])
-    }
-}
-
-impl Mul for Vec3 {
-    type Output = Vec3;
-
-    #[inline]
-    fn mul(self, other: Vec3) -> Vec3 {
+    fn sub(self, other: Vec3) -> Vec3 {
         Vec3::new(
-            self.e[0] * other.e[0],
-            self.e[1] * other.e[1],
-            self.e[2] * other.e[2],
+            self.e[0] - other.e[0],
+            self.e[1] - other.e[1],
+            self.e[2] - other.e[2],
         )
-    }
-}
-
-impl Index<usize> for Vec3 {
-    type Output = f64;
-
-    #[inline]
-    fn index(&self, index: usize) -> &f64 {
-        &self.e[index]
-    }
-}
-
-impl IndexMut<usize> for Vec3 {
-    #[inline]
-    fn index_mut(&mut self, index: usize) -> &mut f64 {
-        &mut self.e[index]
     }
 }
 

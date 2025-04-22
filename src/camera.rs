@@ -81,6 +81,7 @@ impl Camera {
         if depth == 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
+
         if let Some(hit_record) = world.hit(r, Interval::new(0.001, f64::INFINITY)) {
             let direction = Vec3::random_on_hemisphere(&hit_record.normal);
             // Color::new(direction.x(), direction.y(), direction.z()) * 0.5
