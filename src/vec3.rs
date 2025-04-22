@@ -1,5 +1,11 @@
+use rand::Rng;
 use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
+
+fn random_double(min: f64, max: f64) -> f64 {
+    let mut rng = rand::thread_rng(); // Create a random number generator
+    rng.gen_range(min..max) // Generate a random f64 in the range [0.0, 1.0)
+}
 
 /// 3D vector for geometric calculations.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -70,6 +76,43 @@ impl Vec3 {
             self.e[0] * other.e[1] - self.e[1] * other.e[0],
         )
     }
+
+    // /// Returns a random vector.
+    // #[inline]
+    // pub fn random() -> Vec3 {
+    //     Vec3::new(random_double(), random_double(), random_double())
+    // }
+
+    /// Returns a random vector in the range [min, max).
+    #[inline]
+    pub fn random(min: f64, max: f64) -> Vec3 {
+        Vec3::new(
+            random_double(min, max),
+            random_double(min, max),
+            random_double(min, max),
+        )
+    }
+
+    /// Returns a random vector in the unit sphere.
+    #[inline]
+    pub fn random_unit() -> Vec3 {
+        loop {
+            let p = Vec3::random(-1.0, 1.0);
+            let length_squared = p.length_squared();
+            if 1e-160 < length_squared && length_squared <= 1.0 {
+                return p / length_squared.sqrt();
+            }
+        }
+    }
+
+    pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+        let on_unit_sphere = Vec3::random_unit();
+        if on_unit_sphere.dot(normal) > 0.0 {
+            on_unit_sphere
+        } else {
+            -on_unit_sphere
+        }
+    }
 }
 
 impl Default for Vec3 {
@@ -105,6 +148,15 @@ impl Sub for Vec3 {
 }
 
 impl Neg for &Vec3 {
+    type Output = Vec3;
+
+    #[inline]
+    fn neg(self) -> Vec3 {
+        Vec3::new(-self.e[0], -self.e[1], -self.e[2])
+    }
+}
+
+impl Neg for Vec3 {
     type Output = Vec3;
 
     #[inline]
