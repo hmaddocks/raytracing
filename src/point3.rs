@@ -50,7 +50,6 @@ impl Add<Vec3> for Point3 {
     }
 }
 
-// Prevent adding two points together by making this panic with a clear error message
 impl Add<Point3> for Point3 {
     type Output = Point3;
 
@@ -61,58 +60,6 @@ impl Add<Point3> for Point3 {
             self.y() + other.y(),
             self.z() + other.z(),
         )
-    }
-}
-
-impl Sub<Vec3> for Point3 {
-    type Output = Vec3;
-
-    #[inline]
-    fn sub(self, other: Vec3) -> Vec3 {
-        Vec3::new(
-            self.0.x() - other.x(),
-            self.0.y() - other.y(),
-            self.0.z() - other.z(),
-        )
-    }
-}
-
-// Allow Point3 - Point3 = Vec3
-impl Sub for Point3 {
-    type Output = Vec3;
-
-    #[inline]
-    fn sub(self, other: Point3) -> Vec3 {
-        Vec3::new(
-            self.x() - other.x(),
-            self.y() - other.y(),
-            self.z() - other.z(),
-        )
-    }
-}
-
-impl<'a, 'b> Sub<&'b Point3> for &'a Point3 {
-    type Output = Vec3;
-
-    #[inline]
-    fn sub(self, other: &'b Point3) -> Vec3 {
-        Vec3::new(self.x() - other.x(), self.y() - other.y(), self.z() - other.z())
-    }
-}
-
-// Allow Point3 - &Point3 = Vec3
-impl<'a> Sub<&'a Point3> for Point3 {
-    type Output = Vec3;
-    fn sub(self, other: &'a Point3) -> Vec3 {
-        Vec3::new(self.x() - other.x(), self.y() - other.y(), self.z() - other.z())
-    }
-}
-
-// Allow &Point3 - Point3 = Vec3
-impl<'a> Sub<Point3> for &'a Point3 {
-    type Output = Vec3;
-    fn sub(self, other: Point3) -> Vec3 {
-        Vec3::new(self.x() - other.x(), self.y() - other.y(), self.z() - other.z())
     }
 }
 
@@ -140,6 +87,32 @@ impl Mul<f64> for Point3 {
     #[inline]
     fn mul(self, other: f64) -> Point3 {
         Point3::new(self.x() * other, self.y() * other, self.z() * other)
+    }
+}
+
+impl Sub<Vec3> for Point3 {
+    type Output = Vec3;
+
+    #[inline]
+    fn sub(self, other: Vec3) -> Vec3 {
+        Vec3::new(
+            self.0.x() - other.x(),
+            self.0.y() - other.y(),
+            self.0.z() - other.z(),
+        )
+    }
+}
+
+impl Sub for Point3 {
+    type Output = Vec3;
+
+    #[inline]
+    fn sub(self, other: Point3) -> Vec3 {
+        Vec3::new(
+            self.x() - other.x(),
+            self.y() - other.y(),
+            self.z() - other.z(),
+        )
     }
 }
 
