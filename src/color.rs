@@ -105,15 +105,15 @@ mod tests {
     fn test_write_color() {
         // Test normal values in range [0,1]
         let c1 = Color::new(0.0, 0.5, 1.0);
-        assert_eq!(c1.write_color(), "0 128 255");
+        assert_eq!(c1.write_color(), "0 181 255");
 
         // Test clamping for values > 1.0
         let c2 = Color::new(1.5, 0.5, 2.0);
-        assert_eq!(c2.write_color(), "255 128 255");
+        assert_eq!(c2.write_color(), "255 181 255");
 
         // Test clamping for values < 0.0
         let c3 = Color::new(-0.5, 0.5, -1.0);
-        assert_eq!(c3.write_color(), "0 128 0");
+        assert_eq!(c3.write_color(), "0 181 0");
     }
 
     #[test]
