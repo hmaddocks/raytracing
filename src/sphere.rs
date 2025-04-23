@@ -5,7 +5,7 @@ use crate::point3::Point3;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
@@ -19,7 +19,7 @@ impl Sphere {
 
 impl Hittable for Sphere {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
-        let oc = *r.origin() - self.center;
+        let oc = r.origin() - &self.center;
         let a = r.direction().length_squared();
         let half_b = oc.dot(&r.direction());
         let c = oc.length_squared() - self.radius * self.radius;
@@ -48,7 +48,7 @@ impl Hittable for Sphere {
             front_face: true,
         };
 
-        let outward_normal = (hit_record.p - self.center) / self.radius;
+        let outward_normal = &(&hit_record.p - &self.center) / self.radius;
         hit_record.set_face_normal(r, &outward_normal);
         Some(hit_record)
     }

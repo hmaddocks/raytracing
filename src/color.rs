@@ -3,7 +3,7 @@ use crate::vec3::Vec3;
 use std::fmt;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Color(Vec3);
 
 impl Color {

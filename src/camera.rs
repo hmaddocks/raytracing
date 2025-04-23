@@ -88,12 +88,12 @@ impl CameraBuilder {
         let view_port_u = Vec3::new(viewport_width, 0.0, 0.0);
         let view_port_v = Vec3::new(0.0, -viewport_height, 0.0);
 
-        let pixel_delta_u = view_port_u / self.image_width as f64;
-        let pixel_delta_v = view_port_v / image_height as f64;
+        let pixel_delta_u = &view_port_u / self.image_width as f64;
+        let pixel_delta_v = &view_port_v / image_height as f64;
         let viewport_upper_left_vec = center.as_vec3()
             - Vec3::new(0.0, 0.0, focal_length)
-            - (view_port_u / 2.0)
-            - (view_port_v / 2.0);
+            - (&view_port_u / 2.0)
+            - (&view_port_v / 2.0);
         let viewport_upper_left: Point3 = viewport_upper_left_vec.into();
         let pixel00_loc = viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v;
 
@@ -114,7 +114,7 @@ impl CameraBuilder {
 impl Camera {
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         let offset = self.sample_square();
-        let pixel_sample = self.pixel00_loc
+        let pixel_sample = &self.pixel00_loc
             + ((i as f64 + offset.x()) * self.pixel_delta_u)
             + ((j as f64 + offset.y()) * self.pixel_delta_v);
 
@@ -127,16 +127,16 @@ impl Camera {
         Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
     }
 
-    fn ray_color(&self, r: &Ray, depth: u32, world: &HittableList) -> Color {
+    fn ray_color(&self, ray: &Ray, depth: u32, world: &HittableList) -> Color {
         if depth == 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
 
-        if let Some(hit_record) = world.hit(r, Interval::new(0.001, f64::INFINITY)) {
+        if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
             let direction = Vec3::random_on_hemisphere(&hit_record.normal);
             self.ray_color(&Ray::new(hit_record.p, direction), depth - 1, world) * 0.5
         } else {
-            let unit_direction = r.direction().unit();
+            let unit_direction = ray.direction().unit();
             let a = 0.5 * (unit_direction.y() + 1.0);
             Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a
         }
@@ -155,8 +155,8 @@ impl Camera {
             for i in 0..self.image_width {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
-                    let r = self.get_ray(i, j);
-                    pixel_color += self.ray_color(&r, self.max_depth, world);
+                    let ray = self.get_ray(i, j);
+                    pixel_color += self.ray_color(&ray, self.max_depth, world);
                 }
 
                 pixel_color *= self.pixel_samples_scale;

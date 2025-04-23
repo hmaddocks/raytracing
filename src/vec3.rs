@@ -46,7 +46,7 @@ impl Vec3 {
 
     /// Returns the unit vector, or zero if the vector is zero.
     #[inline]
-    pub fn unit(self) -> Vec3 {
+    pub fn unit(&self) -> Vec3 {
         let len = self.length();
         if len == 0.0 {
             Vec3::default()
@@ -94,7 +94,7 @@ impl Vec3 {
             let p = Vec3::random(-1.0, 1.0);
             let length_squared = p.length_squared();
             if 1e-160 < length_squared && length_squared <= 1.0 {
-                return p / length_squared.sqrt();
+                return &p / length_squared.sqrt();
             }
         }
     }
@@ -128,7 +128,7 @@ impl Add for Vec3 {
     }
 }
 
-impl Div<f64> for Vec3 {
+impl Div<f64> for &Vec3 {
     type Output = Vec3;
 
     #[inline]
@@ -153,11 +153,11 @@ impl IndexMut<usize> for Vec3 {
     }
 }
 
-impl Mul for Vec3 {
+impl Mul for &Vec3 {
     type Output = Vec3;
 
     #[inline]
-    fn mul(self, other: Vec3) -> Vec3 {
+    fn mul(self, other: &Vec3) -> Vec3 {
         Vec3::new(
             self.e[0] * other.e[0],
             self.e[1] * other.e[1],
@@ -166,7 +166,7 @@ impl Mul for Vec3 {
     }
 }
 
-impl Mul<f64> for Vec3 {
+impl Mul<f64> for &Vec3 {
     type Output = Vec3;
 
     #[inline]
@@ -273,7 +273,7 @@ mod tests {
     #[test]
     fn test_vec3_scalar_mul() {
         let v = Vec3::new(1.0, 2.0, 3.0);
-        let result = v * 2.0;
+        let result = &v * 2.0;
         assert_eq!(result.x(), 2.0);
         assert_eq!(result.y(), 4.0);
         assert_eq!(result.z(), 6.0);
@@ -282,7 +282,7 @@ mod tests {
     #[test]
     fn test_vec3_scalar_div() {
         let v = Vec3::new(2.0, 4.0, 6.0);
-        let result = v / 2.0;
+        let result = &v / 2.0;
         assert_eq!(result.x(), 1.0);
         assert_eq!(result.y(), 2.0);
         assert_eq!(result.z(), 3.0);
@@ -292,7 +292,7 @@ mod tests {
     fn test_vec3_mul() {
         let v1 = Vec3::new(1.0, 2.0, 3.0);
         let v2 = Vec3::new(4.0, 5.0, 6.0);
-        let result = v1 * v2;
+        let result = &v1 * &v2;
         assert_eq!(result.x(), 4.0);
         assert_eq!(result.y(), 10.0);
         assert_eq!(result.z(), 18.0);

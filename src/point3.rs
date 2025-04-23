@@ -44,6 +44,19 @@ impl From<Vec3> for Point3 {
 }
 
 // Same as a move
+impl Add<Vec3> for &Point3 {
+    type Output = Point3;
+
+    #[inline]
+    fn add(self, other: Vec3) -> Point3 {
+        Point3::new(
+            self.0.x() + other.x(),
+            self.0.y() + other.y(),
+            self.0.z() + other.z(),
+        )
+    }
+}
+
 impl Add<Vec3> for Point3 {
     type Output = Point3;
 
@@ -84,7 +97,7 @@ impl Mul<f64> for Point3 {
     }
 }
 
-impl Sub<Vec3> for Point3 {
+impl Sub<Vec3> for &Point3 {
     type Output = Vec3;
 
     #[inline]
@@ -102,6 +115,19 @@ impl Sub for Point3 {
 
     #[inline]
     fn sub(self, other: Point3) -> Vec3 {
+        Vec3::new(
+            self.x() - other.x(),
+            self.y() - other.y(),
+            self.z() - other.z(),
+        )
+    }
+}
+
+impl Sub for &Point3 {
+    type Output = Vec3;
+
+    #[inline]
+    fn sub(self, other: &Point3) -> Vec3 {
         Vec3::new(
             self.x() - other.x(),
             self.y() - other.y(),
