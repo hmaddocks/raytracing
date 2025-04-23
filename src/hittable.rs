@@ -11,7 +11,7 @@ pub struct HitRecord {
     pub front_face: bool,
 }
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord>;
 }
 

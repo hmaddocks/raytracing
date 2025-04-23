@@ -4,7 +4,7 @@ use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
 
 fn random_double(min: f64, max: f64) -> f64 {
     let mut rng = rand::thread_rng(); // Create a random number generator
-    rng.gen_range(min..max) // Generate a random f64 in the range [0.0, 1.0)
+    rng.gen_range(min..max) // Generate a random f64 in the range [min, max)
 }
 
 /// 3D vector for geometric calculations.
@@ -94,7 +94,7 @@ impl Vec3 {
             let p = Vec3::random(-1.0, 1.0);
             let length_squared = p.length_squared();
             if 1e-160 < length_squared && length_squared <= 1.0 {
-                return &p / length_squared.sqrt();
+                return p / length_squared.sqrt();
             }
         }
     }
@@ -143,6 +143,15 @@ impl Add for Vec3 {
 }
 
 impl Div<f64> for &Vec3 {
+    type Output = Vec3;
+
+    #[inline]
+    fn div(self, other: f64) -> Vec3 {
+        Vec3::new(self.e[0] / other, self.e[1] / other, self.e[2] / other)
+    }
+}
+
+impl Div<f64> for Vec3 {
     type Output = Vec3;
 
     #[inline]

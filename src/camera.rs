@@ -6,11 +6,8 @@ use crate::ray::Ray;
 use crate::vec3::Vec3;
 
 use rand::Rng;
-
-fn random_double() -> f64 {
-    let mut rng = rand::thread_rng(); // Create a random number generator
-    rng.gen_range(0.0..1.0) // Generate a random f64 in the range [0.0, 1.0)
-}
+use rayon::prelude::*;
+use std::sync::{Arc, Mutex};
 
 pub struct Camera {
     image_height: u32,
@@ -111,9 +108,18 @@ impl CameraBuilder {
     }
 }
 
+fn random_double() -> f64 {
+    let mut rng = rand::thread_rng(); // Create a random number generator
+    rng.gen_range(0.0..1.0) // Generate a random f64 in the range [0.0, 1.0)
+}
+
+fn sample_square() -> Vec3 {
+    Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
+}
+
 impl Camera {
     fn get_ray(&self, i: u32, j: u32) -> Ray {
-        let offset = self.sample_square();
+        let offset = sample_square();
         let pixel_sample = &self.pixel00_loc
             + ((i as f64 + offset.x()) * self.pixel_delta_u)
             + ((j as f64 + offset.y()) * self.pixel_delta_v);
@@ -121,10 +127,6 @@ impl Camera {
         let ray_origin = self.center;
         let ray_direction = pixel_sample - ray_origin;
         Ray::new(ray_origin, ray_direction)
-    }
-
-    fn sample_square(&self) -> Vec3 {
-        Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
     }
 
     fn ray_color(&self, ray: &Ray, depth: u32, world: &HittableList) -> Color {
@@ -143,25 +145,111 @@ impl Camera {
     }
 
     pub fn render(&self, world: &HittableList) {
+        // Process scanlines in parallel
+        let image: Vec<Vec<Color>> = (0..self.image_height)
+            .into_par_iter() // Parallelize over scanlines
+            .map(|j| {
+                // Process each pixel in the current scanline
+                let row: Vec<Color> = (0..self.image_width)
+                    .into_par_iter() // Parallelize over pixels in the scanline
+                    .map(|i| {
+                        let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+
+                        // Sample each pixel multiple times for anti-aliasing
+                        for _ in 0..self.samples_per_pixel {
+                            let ray = self.get_ray(i, j);
+                            pixel_color += self.ray_color(&ray, self.max_depth, world);
+                        }
+
+                        pixel_color *= self.pixel_samples_scale;
+                        pixel_color
+                    })
+                    .collect();
+
+                row
+            })
+            .collect();
+
         println!("P3");
         println!("{} {}", self.image_width, self.image_height);
         println!("255");
 
-        for j in 0..self.image_height {
-            eprint!(
-                "\rScanlines remaining: {}             ",
-                self.image_height - j
-            );
-            for i in 0..self.image_width {
-                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
-                for _ in 0..self.samples_per_pixel {
-                    let ray = self.get_ray(i, j);
-                    pixel_color += self.ray_color(&ray, self.max_depth, world);
-                }
-
-                pixel_color *= self.pixel_samples_scale;
-                println!("{}", pixel_color.write_color());
+        // Output all scanlines
+        for scanline in image {
+            for pixel in scanline {
+                println!("{}", &pixel.write_color());
             }
         }
+
+        eprintln!("\nDone.");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::hittable_list::HittableList;
+    use crate::point3::Point3;
+    use crate::ray::Ray;
+    use crate::vec3::Vec3;
+
+    #[test]
+    fn test_camera_builder_defaults() {
+        let camera = CameraBuilder::default().build();
+        assert_eq!(camera.image_width, 100);
+        assert_eq!(camera.image_height, 100); // aspect_ratio 1.0
+        assert_eq!(camera.samples_per_pixel, 100);
+        assert_eq!(camera.max_depth, 10);
+    }
+
+    #[test]
+    fn test_camera_builder_custom() {
+        let camera = CameraBuilder::new()
+            .image_width(200)
+            .samples_per_pixel(50)
+            .max_depth(5)
+            .build();
+        assert_eq!(camera.image_width, 200);
+        assert_eq!(camera.samples_per_pixel, 50);
+        assert_eq!(camera.max_depth, 5);
+    }
+
+    #[test]
+    fn test_random_double_range() {
+        for _ in 0..100 {
+            let v = random_double();
+            assert!(v >= 0.0 && v < 1.0, "random_double out of range: {}", v);
+        }
+    }
+
+    #[test]
+    fn test_sample_square_range() {
+        for _ in 0..100 {
+            let v = sample_square();
+            assert!(v.x() >= -0.5 && v.x() < 0.5);
+            assert!(v.y() >= -0.5 && v.y() < 0.5);
+            assert_eq!(v.z(), 0.0);
+        }
+    }
+
+    #[test]
+    fn test_get_ray() {
+        let camera = CameraBuilder::default().build();
+        let ray = camera.get_ray(0, 0);
+        // The ray's origin should be at the camera center
+        assert_eq!(ray.origin(), &camera.center);
+        // The direction should be normalized (or close to)
+        let dir = ray.direction();
+        let len = dir.length();
+        assert!(len > 0.0);
+    }
+
+    #[test]
+    fn test_ray_color_depth_zero() {
+        let camera = CameraBuilder::default().build();
+        let ray = Ray::new(Point3::default(), Vec3::new(1.0, 0.0, 0.0));
+        let world = HittableList::new();
+        let color = camera.ray_color(&ray, 0, &world);
+        assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
 }
