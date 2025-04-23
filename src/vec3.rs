@@ -99,6 +99,8 @@ impl Vec3 {
         }
     }
 
+    /// Returns a random vector on the hemisphere.
+    #[inline]
     pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
         let on_unit_sphere = Vec3::random_unit();
         if on_unit_sphere.dot(normal) > 0.0 {
@@ -106,6 +108,18 @@ impl Vec3 {
         } else {
             -on_unit_sphere
         }
+    }
+
+    /// Returns true if the vector is near zero.
+    #[inline]
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s
+    }
+
+    #[inline]
+    pub fn reflect(&self, normal: &Vec3) -> Vec3 {
+        *self - 2.0 * self.dot(normal) * normal
     }
 }
 
@@ -172,6 +186,15 @@ impl Mul<f64> for &Vec3 {
     #[inline]
     fn mul(self, other: f64) -> Vec3 {
         Vec3::new(self.e[0] * other, self.e[1] * other, self.e[2] * other)
+    }
+}
+
+impl Mul<&Vec3> for f64 {
+    type Output = Vec3;
+
+    #[inline]
+    fn mul(self, other: &Vec3) -> Vec3 {
+        Vec3::new(self * other.e[0], self * other.e[1], self * other.e[2])
     }
 }
 

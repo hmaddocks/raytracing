@@ -5,7 +5,7 @@ use crate::point3::Point3;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Sphere {
     center: Point3,
     radius: f64,

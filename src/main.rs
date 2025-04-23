@@ -7,6 +7,7 @@ mod color;
 mod hittable;
 mod hittable_list;
 mod interval;
+mod material;
 mod point3;
 mod ray;
 mod sphere;
