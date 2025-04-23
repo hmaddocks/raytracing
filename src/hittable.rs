@@ -1,4 +1,5 @@
 use crate::interval::Interval;
+use crate::material::Material;
 use crate::point3::Point3;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
@@ -9,6 +10,7 @@ pub struct HitRecord {
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
+    pub material: Option<Material>,
 }
 
 pub trait Hittable: Send + Sync {

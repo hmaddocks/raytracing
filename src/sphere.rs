@@ -1,19 +1,25 @@
 use crate::hittable::HitRecord;
 use crate::hittable::Hittable;
 use crate::interval::Interval;
+use crate::material::Material;
 use crate::point3::Point3;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64) -> Self {
-        Sphere { center, radius }
+    pub fn new(center: Point3, radius: f64, material: Material) -> Self {
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
@@ -46,6 +52,7 @@ impl Hittable for Sphere {
             p: r.at(root),
             normal: Vec3::default(),
             front_face: true,
+            material: Some(self.material.clone()),
         };
 
         let outward_normal = &(&hit_record.p - &self.center) / self.radius;
@@ -57,12 +64,13 @@ impl Hittable for Sphere {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::material::TestMaterial;
     use crate::vec3::Vec3;
 
     #[test]
     fn test_sphere_hit_direct_hit() {
         // Create a sphere at the origin with radius 1
-        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray that should hit the sphere
         let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
@@ -93,7 +101,7 @@ mod tests {
     #[test]
     fn test_sphere_hit_tangent() {
         // Create a sphere at the origin with radius 1
-        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray that should hit the sphere tangentially
         let ray = Ray::new(Point3::new(0.0, 1.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
@@ -113,7 +121,7 @@ mod tests {
     #[test]
     fn test_sphere_hit_miss() {
         // Create a sphere at the origin with radius 1
-        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray that should miss the sphere
         let ray = Ray::new(Point3::new(0.0, 2.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
@@ -128,7 +136,7 @@ mod tests {
     #[test]
     fn test_sphere_hit_from_inside() {
         // Create a sphere at the origin with radius 1
-        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray from inside the sphere
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
@@ -147,7 +155,7 @@ mod tests {
     #[test]
     fn test_sphere_hit_behind_ray() {
         // Create a sphere at the origin with radius 1
-        let sphere = Sphere::new(Point3::new(0.0, 0.0, 5.0), 1.0);
+        let sphere = Sphere::new(Point3::new(0.0, 0.0, 5.0), 1.0, TestMaterial::new());
 
         // Create a ray pointing away from the sphere
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
@@ -162,7 +170,7 @@ mod tests {
     #[test]
     fn test_sphere_hit_t_min_max() {
         // Create a sphere at the origin with radius 1
-        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray that should hit the sphere
         let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vec3::new(0.0, 0.0, 1.0));

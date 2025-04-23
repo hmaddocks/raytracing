@@ -7,7 +7,6 @@ use crate::vec3::Vec3;
 
 use rand::Rng;
 use rayon::prelude::*;
-use std::sync::{Arc, Mutex};
 
 pub struct Camera {
     image_height: u32,
@@ -135,8 +134,12 @@ impl Camera {
         }
 
         if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
-            let direction = hit_record.normal + Vec3::random_unit();
-            self.ray_color(&Ray::new(hit_record.p, direction), depth - 1, world) * 0.5
+            if let Some(material) = &hit_record.material {
+                let (attenuation, scatter) = material.scatter(ray, &hit_record);
+                self.ray_color(&scatter, depth - 1, world) * attenuation
+            } else {
+                Color::new(0.0, 0.0, 0.0)
+            }
         } else {
             let unit_direction = ray.direction().unit();
             let a = 0.5 * (unit_direction.y() + 1.0);
@@ -180,8 +183,6 @@ impl Camera {
                 println!("{}", &pixel.write_color());
             }
         }
-
-        eprintln!("\nDone.");
     }
 }
 
