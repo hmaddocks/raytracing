@@ -13,9 +13,10 @@ impl Color {
     }
 
     pub fn write_color(&self) -> String {
-        let r = self.0.x();
-        let g = self.0.y();
-        let b = self.0.z();
+        // Apply a linear to gamma transform for gamma 2
+        let r = Color::linear_to_gamma(self.0.x());
+        let g = Color::linear_to_gamma(self.0.y());
+        let b = Color::linear_to_gamma(self.0.z());
 
         // Translate the [0,1] component values to the byte range [0,255].
         let intensity = Interval::new(0.000, 0.999);
@@ -24,6 +25,14 @@ impl Color {
         let bbyte = (256.0 * intensity.clamp(b)) as i32;
 
         format!("{} {} {}", rbyte, gbyte, bbyte)
+    }
+
+    pub fn linear_to_gamma(linear_component: f64) -> f64 {
+        if linear_component > 0.0 {
+            linear_component.sqrt()
+        } else {
+            0.0
+        }
     }
 }
 
