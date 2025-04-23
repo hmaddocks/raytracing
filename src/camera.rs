@@ -133,7 +133,7 @@ impl Camera {
         }
 
         if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
-            let direction = Vec3::random_on_hemisphere(&hit_record.normal);
+            let direction = hit_record.normal + Vec3::random_unit();
             self.ray_color(&Ray::new(hit_record.p, direction), depth - 1, world) * 0.5
         } else {
             let unit_direction = ray.direction().unit();
