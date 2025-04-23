@@ -31,12 +31,19 @@ impl Point3 {
     }
 }
 
+impl Default for Point3 {
+    fn default() -> Self {
+        Point3(Vec3::default())
+    }
+}
+
 impl From<Vec3> for Point3 {
     fn from(value: Vec3) -> Self {
         Point3(value)
     }
 }
 
+// Same as a move
 impl Add<Vec3> for Point3 {
     type Output = Point3;
 
@@ -46,19 +53,6 @@ impl Add<Vec3> for Point3 {
             self.0.x() + other.x(),
             self.0.y() + other.y(),
             self.0.z() + other.z(),
-        )
-    }
-}
-
-impl Add<Point3> for Point3 {
-    type Output = Point3;
-
-    #[inline]
-    fn add(self, other: Point3) -> Point3 {
-        Point3::new(
-            self.x() + other.x(),
-            self.y() + other.y(),
-            self.z() + other.z(),
         )
     }
 }
@@ -119,16 +113,6 @@ impl Sub for Point3 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_point3_add_point3() {
-        let p1 = Point3::new(1.0, 2.0, 3.0);
-        let p2 = Point3::new(4.0, 5.0, 6.0);
-        let result = p1 + p2;
-        assert_eq!(result.x(), 5.0);
-        assert_eq!(result.y(), 7.0);
-        assert_eq!(result.z(), 9.0);
-    }
 
     #[test]
     fn test_point3_creation() {
