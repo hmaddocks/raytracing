@@ -24,23 +24,71 @@ pub struct Camera {
     max_depth: u32,
 }
 
-impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32) -> Self {
-        let mut image_height = (image_width as f64 / aspect_ratio) as u32;
+pub struct CameraBuilder {
+    aspect_ratio: f64,
+    image_width: u32,
+    samples_per_pixel: u32,
+    max_depth: u32,
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        CameraBuilder::default().build()
+    }
+}
+
+impl Default for CameraBuilder {
+    fn default() -> Self {
+        CameraBuilder {
+            aspect_ratio: 1.0,
+            image_width: 100,
+            samples_per_pixel: 100,
+            max_depth: 10,
+        }
+    }
+}
+
+impl CameraBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn aspect_ratio(mut self, aspect_ratio: f64) -> Self {
+        self.aspect_ratio = aspect_ratio;
+        self
+    }
+
+    pub fn image_width(mut self, image_width: u32) -> Self {
+        self.image_width = image_width;
+        self
+    }
+
+    pub fn samples_per_pixel(mut self, samples_per_pixel: u32) -> Self {
+        self.samples_per_pixel = samples_per_pixel;
+        self
+    }
+
+    pub fn max_depth(mut self, max_depth: u32) -> Self {
+        self.max_depth = max_depth;
+        self
+    }
+
+    pub fn build(self) -> Camera {
+        let mut image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
         image_height = if image_height < 1 { 1 } else { image_height };
 
-        let pixel_samples_scale = 1.0 / (samples_per_pixel as f64);
+        let pixel_samples_scale = 1.0 / (self.samples_per_pixel as f64);
 
-        let center = Point3::new(0.0, 0.0, 0.0);
+        let center = Point3::default();
 
         let focal_length = 1.0;
         let viewport_height = 2.0;
-        let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
+        let viewport_width = viewport_height * (self.image_width as f64 / image_height as f64);
 
         let view_port_u = Vec3::new(viewport_width, 0.0, 0.0);
         let view_port_v = Vec3::new(0.0, -viewport_height, 0.0);
 
-        let pixel_delta_u = view_port_u / image_width as f64;
+        let pixel_delta_u = view_port_u / self.image_width as f64;
         let pixel_delta_v = view_port_v / image_height as f64;
         let viewport_upper_left_vec = center.as_vec3()
             - Vec3::new(0.0, 0.0, focal_length)
@@ -51,17 +99,19 @@ impl Camera {
 
         Camera {
             image_height,
-            image_width,
+            image_width: self.image_width,
             center,
             pixel00_loc,
             pixel_delta_u,
             pixel_delta_v,
             pixel_samples_scale,
-            samples_per_pixel,
-            max_depth: 10, // FIXME: make this configurable
+            samples_per_pixel: self.samples_per_pixel,
+            max_depth: self.max_depth,
         }
     }
+}
 
+impl Camera {
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         let offset = self.sample_square();
         let pixel_sample = self.pixel00_loc
@@ -84,7 +134,6 @@ impl Camera {
 
         if let Some(hit_record) = world.hit(r, Interval::new(0.001, f64::INFINITY)) {
             let direction = Vec3::random_on_hemisphere(&hit_record.normal);
-            // Color::new(direction.x(), direction.y(), direction.z()) * 0.5
             self.ray_color(&Ray::new(hit_record.p, direction), depth - 1, world) * 0.5
         } else {
             let unit_direction = r.direction().unit();

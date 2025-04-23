@@ -1,4 +1,3 @@
-use crate::camera::Camera;
 use crate::hittable_list::HittableList;
 use crate::point3::Point3;
 use crate::sphere::Sphere;
@@ -23,10 +22,12 @@ fn main() {
     )));
 
     // Camera
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width = 800;
-    let samples_per_pixel = 100;
-    let camera = Camera::new(aspect_ratio, image_width, samples_per_pixel);
+    let camera = camera::CameraBuilder::new()
+        .aspect_ratio(16.0 / 9.0)
+        .image_width(800)
+        .samples_per_pixel(100)
+        .max_depth(10)
+        .build();
 
     camera.render(&world);
     eprintln!("\nDone.");
