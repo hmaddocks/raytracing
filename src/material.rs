@@ -54,7 +54,8 @@ impl Metal {
 
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
         // let reflected = hit_record.normal.reflect(&ray.direction());
-        let reflected = ray.direction().reflect(&hit_record.normal);
+        let mut reflected = ray.direction().reflect(&hit_record.normal);
+        reflected = reflected.unit() + (Vec3::random_unit() * self.fuzz);
         let scatter = Ray::new(hit_record.p, reflected);
         (self.albedo, scatter)
     }
@@ -206,9 +207,9 @@ mod tests {
         // Check that the scattered ray originates from the hit point
         assert_eq!(*scattered_ray.origin(), hit_point);
 
-        // In the Metal implementation, reflection is calculated using normal.reflect(&ray.direction())
-        // Let's calculate what that should be based on the Vec3::reflect implementation
-        let expected_direction = normal.reflect(ray.direction());
+        // In the Metal implementation, reflection is calculated using ray.direction().reflect(&hit_record.normal)
+        // and then normalized before adding fuzz
+        let expected_direction = ray.direction().reflect(&normal).unit();
 
         // Allow for some floating-point imprecision
         let dir_diff = (*scattered_ray.direction() - expected_direction).length();
@@ -246,16 +247,16 @@ mod tests {
         // Check that the scattered ray originates from the hit point
         assert_eq!(*scattered_ray.origin(), hit_point);
 
-        // With maximum fuzz (1.0), the reflection should be zero since the implementation does:
-        // reflected = normal.reflect(&ray.direction()) * (1.0 - self.fuzz);
-        // With fuzz = 1.0, this becomes normal.reflect(&ray.direction()) * 0.0 = 0.0
-        let expected_direction = Vec3::new(0.0, 0.0, 0.0);
-        let dir_diff = (*scattered_ray.direction() - expected_direction).length();
+        // With maximum fuzz (1.0), the implementation does:
+        // reflected = ray.direction().reflect(&hit_record.normal).unit() + (Vec3::random_unit() * 1.0)
+        // This means the direction will be the normalized reflection plus a random unit vector
+        // Since there's randomness involved, we can't predict the exact direction
+        // Instead, we'll just verify that the direction is not zero and has a reasonable length
+        let direction_length = scattered_ray.direction().length();
         assert!(
-            dir_diff < 1e-10,
-            "Expected direction: {:?}, got: {:?}",
-            expected_direction,
-            scattered_ray.direction()
+            direction_length > 0.5 && direction_length < 2.5,
+            "Expected direction length between 0.5 and 2.5, got: {}",
+            direction_length
         );
     }
 

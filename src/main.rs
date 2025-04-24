@@ -23,7 +23,7 @@ fn main() {
     let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
     let material_center = Lambertian::new(Color::new(0.1, 0.2, 0.5));
     let material_left = Metal::new(Color::new(0.8, 0.8, 0.8), 0.3);
-    let material_right = Metal::new(Color::new(0.8, 0.6, 0.2), 0.0);
+    let material_right = Metal::new(Color::new(0.8, 0.6, 0.2), 1.0);
 
     // Add spheres with materials
     world.add(Box::new(Sphere::new(
