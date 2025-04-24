@@ -61,10 +61,12 @@ fn main() {
         .image_width(800)
         .samples_per_pixel(100)
         .max_depth(50)
-        .vertical_fov(20.0)
+        .vertical_fov(60.0)
         .look_from(Point3::new(-2.0, 2.0, 1.0))
         .look_at(Point3::new(0.0, 0.0, -1.0))
         .vup(Vec3::new(0.0, 1.0, 0.0))
+        .defocus_angle(2.0)
+        .focus_dist(3.4)
         .build();
 
     camera.render(&world);

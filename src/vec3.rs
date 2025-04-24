@@ -110,6 +110,18 @@ impl Vec3 {
         }
     }
 
+    /// Returns a random vector on the unit disk.
+    #[inline]
+    pub fn random_on_unit_disk() -> Vec3 {
+        loop {
+            let p = Vec3::new(random_double(-1.0, 1.0), random_double(-1.0, 1.0), 0.0);
+            let length_squared = p.length_squared();
+            if length_squared < 1.0 {
+                return p;
+            }
+        }
+    }
+
     /// Returns true if the vector is near zero.
     #[inline]
     pub fn near_zero(&self) -> bool {
