@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use crate::color::Color;
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
@@ -80,10 +82,31 @@ impl Dielectric {
         } else {
             self.refraction_index
         };
-        let unit_direction = ray.direction().unit();
 
-        let refracted = unit_direction.refract(&hit_record.normal, &hit_record.normal, ri);
-        (attenuation, Ray::new(hit_record.p, refracted))
+        let unit_direction = ray.direction().unit();
+        let cos_theta = (-unit_direction.dot(&hit_record.normal)).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let cannot_refract = ri * sin_theta > 1.0;
+        let direction =
+            if cannot_refract || Self::reflectance(cos_theta, ri) > Self::random_double() {
+                unit_direction.reflect(&hit_record.normal)
+            } else {
+                unit_direction.refract(&hit_record.normal, ri)
+            };
+
+        (attenuation, Ray::new(hit_record.position, direction))
+    }
+
+    fn random_double() -> f64 {
+        let mut rng = rand::thread_rng(); // Create a random number generator
+        rng.gen_range(0.0..1.0) // Generate a random f64 in the range [0.0, 1.0)
+    }
+
+    fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
+        let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
+        r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
     }
 }
 
