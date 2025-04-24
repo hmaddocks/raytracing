@@ -7,6 +7,7 @@ use crate::vec3::Vec3;
 pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
+    Dielectric(Dielectric),
     Test(TestMaterial),
 }
 
@@ -15,6 +16,7 @@ impl Material {
         match self {
             Material::Lambertian(l) => l.scatter(ray, hit_record),
             Material::Metal(m) => m.scatter(ray, hit_record),
+            Material::Dielectric(d) => d.scatter(ray, hit_record),
             Material::Test(t) => t.scatter(ray, hit_record),
         }
     }
@@ -58,6 +60,30 @@ impl Metal {
         reflected = reflected.unit() + (Vec3::random_unit() * self.fuzz);
         let scatter = Ray::new(hit_record.p, reflected);
         (self.albedo, scatter)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Dielectric {
+    refraction_index: f64,
+}
+
+impl Dielectric {
+    pub fn new(refraction_index: f64) -> Material {
+        Material::Dielectric(Dielectric { refraction_index })
+    }
+
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
+        let attenuation = Color::new(1.0, 1.0, 1.0);
+        let ri = if hit_record.front_face {
+            1.0 / self.refraction_index
+        } else {
+            self.refraction_index
+        };
+        let unit_direction = ray.direction().unit();
+
+        let refracted = unit_direction.refract(&hit_record.normal, &hit_record.normal, ri);
+        (attenuation, Ray::new(hit_record.p, refracted))
     }
 }
 
