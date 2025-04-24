@@ -49,13 +49,13 @@ impl Hittable for Sphere {
 
         let mut hit_record = HitRecord {
             t: root,
-            p: r.at(root),
+            position: r.at(root),
             normal: Vec3::default(),
             front_face: true,
             material: Some(self.material.clone()),
         };
 
-        let outward_normal = &(&hit_record.p - &self.center) / self.radius;
+        let outward_normal = &(&hit_record.position - &self.center) / self.radius;
         hit_record.set_face_normal(r, &outward_normal);
         Some(hit_record)
     }
@@ -86,7 +86,7 @@ mod tests {
         assert!((hit.t - 4.0).abs() < 1e-6);
 
         // The hit point should be at (0, 0, -1) - the front of the sphere
-        let hit_point = hit.p;
+        let hit_point = hit.position;
         assert!((hit_point.x() - 0.0).abs() < 1e-6);
         assert!((hit_point.y() - 0.0).abs() < 1e-6);
         assert!((hit_point.z() - (-1.0)).abs() < 1e-6);
@@ -114,7 +114,7 @@ mod tests {
 
         // The hit point should be at y=1 (tangent to the sphere)
         let hit = hit_record.unwrap();
-        let hit_point = hit.p;
+        let hit_point = hit.position;
         assert!((hit_point.y() - 1.0).abs() < 1e-6);
     }
 

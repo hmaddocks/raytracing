@@ -6,7 +6,7 @@ use crate::vec3::Vec3;
 
 #[derive(Debug, PartialEq)]
 pub struct HitRecord {
-    pub p: Point3,
+    pub position: Point3,
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,

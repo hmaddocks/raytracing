@@ -37,7 +37,7 @@ impl Lambertian {
         if scatter_direction.near_zero() {
             scatter_direction = hit_record.normal;
         }
-        let scatter = Ray::new(hit_record.p, scatter_direction);
+        let scatter = Ray::new(hit_record.position, scatter_direction);
         (self.albedo, scatter)
     }
 }
@@ -58,7 +58,7 @@ impl Metal {
         // let reflected = hit_record.normal.reflect(&ray.direction());
         let mut reflected = ray.direction().reflect(&hit_record.normal);
         reflected = reflected.unit() + (Vec3::random_unit() * self.fuzz);
-        let scatter = Ray::new(hit_record.p, reflected);
+        let scatter = Ray::new(hit_record.position, reflected);
         (self.albedo, scatter)
     }
 }
@@ -99,7 +99,7 @@ impl TestMaterial {
     fn scatter(&self, _ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
         // Simple implementation that just returns white and a ray in the normal direction
         let scatter_direction = hit_record.normal;
-        let scatter = Ray::new(hit_record.p, scatter_direction);
+        let scatter = Ray::new(hit_record.position, scatter_direction);
         (Color::new(1.0, 1.0, 1.0), scatter)
     }
 }
@@ -110,9 +110,9 @@ mod tests {
     use crate::point3::Point3;
 
     // Helper function to create a HitRecord for testing
-    fn create_hit_record(p: Point3, normal: Vec3, material: Option<Material>) -> HitRecord {
+    fn create_hit_record(position: Point3, normal: Vec3, material: Option<Material>) -> HitRecord {
         let hit_record = HitRecord {
-            p,
+            position,
             normal,
             t: 1.0,
             front_face: true,

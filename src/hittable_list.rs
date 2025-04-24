@@ -77,7 +77,7 @@ mod tests {
         assert!((hit.t - 4.0).abs() < 1e-6);
 
         // The hit point should be at (0, 0, 4) - the front of the sphereb
-        let hit_point = hit.p;
+        let hit_point = hit.position;
         assert!((hit_point.x() - 0.0).abs() < 1e-6);
         assert!((hit_point.y() - 0.0).abs() < 1e-6);
         assert!((hit_point.z() - 4.0).abs() < 1e-6);
@@ -113,7 +113,7 @@ mod tests {
         assert!((hit.t - 2.0).abs() < 1e-6);
 
         // The hit point should be at (0, 0, 2) - the front of the closer sphere
-        let hit_point = hit.p;
+        let hit_point = hit.position;
         assert!((hit_point.x() - 0.0).abs() < 1e-6);
         assert!((hit_point.y() - 0.0).abs() < 1e-6);
         assert!((hit_point.z() - 2.0).abs() < 1e-6);
@@ -150,7 +150,7 @@ mod tests {
         assert!((hit.t - 2.0).abs() < 1e-6);
 
         // The hit point should be at (0, 0, 2) - the front of the closer sphere
-        let hit_point = hit.p;
+        let hit_point = hit.position;
         assert!((hit_point.x() - 0.0).abs() < 1e-6);
         assert!((hit_point.y() - 0.0).abs() < 1e-6);
         assert!((hit_point.z() - 2.0).abs() < 1e-6);
@@ -185,7 +185,7 @@ mod tests {
         let hit = hit_record.unwrap();
 
         // For a sphere at z=5 with radius 1, the hit point should be at z=4
-        assert!((hit.p.z() - 4.0).abs() < 1e-6);
+        assert!((hit.position.z() - 4.0).abs() < 1e-6);
         assert!((hit.t - 4.0).abs() < 1e-6); // t should equal the z-coordinate in this case
 
         // Test with t_max that excludes both spheres
