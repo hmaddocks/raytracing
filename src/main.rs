@@ -96,5 +96,4 @@ fn main() {
         .build();
 
     camera.render(&world);
-    eprintln!("\nDone.");
 }

@@ -8,3 +8,4 @@ edition = "2024"
 [dependencies]
 rand = "0.9"
 rayon = "1.10"
+indicatif = "0.17.7"

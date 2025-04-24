@@ -6,6 +6,7 @@ use crate::ray::Ray;
 use crate::utilities::{degrees_to_radians, random_in_unit_disk, sample_square};
 use crate::vec3::Vec3;
 
+use indicatif::ProgressBar;
 use rayon::prelude::*;
 
 pub struct Camera {
@@ -203,6 +204,15 @@ impl Camera {
     }
 
     pub fn render(&self, world: &HittableList) {
+        // Create a progress bar for tracking scanlines
+        let progress_bar = ProgressBar::new(self.image_height as u64);
+        progress_bar.set_style(
+            indicatif::ProgressStyle::default_bar()
+                .template("[{elapsed_precise}] [{bar:80.cyan/blue}] {pos}/{len} scanlines ({eta})")
+                .unwrap()
+                .progress_chars("#>-"),
+        );
+
         // Process scanlines in parallel
         let image: Vec<Vec<Color>> = (0..self.image_height)
             .into_par_iter() // Parallelize over scanlines
@@ -224,9 +234,14 @@ impl Camera {
                     })
                     .collect();
 
+                // Increment the progress bar for each completed scanline
+                progress_bar.inc(1);
                 row
             })
             .collect();
+
+        // Finish the progress bar
+        progress_bar.finish_with_message("Rendering complete");
 
         println!("P3");
         println!("{} {}", self.image_width, self.image_height);
