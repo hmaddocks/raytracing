@@ -3,6 +3,7 @@ use crate::hittable_list::HittableList;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::point3::Point3;
 use crate::sphere::Sphere;
+use crate::vec3::Vec3;
 
 mod camera;
 mod color;
@@ -59,7 +60,11 @@ fn main() {
         .aspect_ratio(16.0 / 9.0)
         .image_width(800)
         .samples_per_pixel(100)
-        .max_depth(10)
+        .max_depth(50)
+        .vertical_fov(20.0)
+        .look_from(Point3::new(-2.0, 2.0, 1.0))
+        .look_at(Point3::new(0.0, 0.0, -1.0))
+        .vup(Vec3::new(0.0, 1.0, 0.0))
         .build();
 
     camera.render(&world);

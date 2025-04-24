@@ -18,6 +18,13 @@ pub struct Camera {
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     max_depth: u32,
+    vertical_fov: f64,
+    look_from: Point3,
+    look_at: Point3,
+    vup: Vec3,
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
 }
 
 pub struct CameraBuilder {
@@ -25,6 +32,13 @@ pub struct CameraBuilder {
     image_width: u32,
     samples_per_pixel: u32,
     max_depth: u32,
+    vertical_fov: f64,
+    look_from: Point3,
+    look_at: Point3,
+    vup: Vec3,
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
 }
 
 impl Default for Camera {
@@ -40,6 +54,13 @@ impl Default for CameraBuilder {
             image_width: 100,
             samples_per_pixel: 100,
             max_depth: 10,
+            vertical_fov: 90.0,
+            look_from: Point3::default(),
+            look_at: Point3::new(0.0, 0.0, -1.0),
+            vup: Vec3::new(0.0, 1.0, 0.0),
+            u: Vec3::new(1.0, 0.0, 0.0),
+            v: Vec3::new(0.0, 1.0, 0.0),
+            w: Vec3::new(0.0, 0.0, 1.0),
         }
     }
 }
@@ -69,29 +90,59 @@ impl CameraBuilder {
         self
     }
 
+    pub fn vertical_fov(mut self, vertical_fov: f64) -> Self {
+        self.vertical_fov = vertical_fov;
+        self
+    }
+
+    pub fn look_from(mut self, look_from: Point3) -> Self {
+        self.look_from = look_from;
+        self
+    }
+
+    pub fn look_at(mut self, look_at: Point3) -> Self {
+        self.look_at = look_at;
+        self
+    }
+
+    pub fn vup(mut self, vup: Vec3) -> Self {
+        self.vup = vup;
+        self
+    }
+
     pub fn build(self) -> Camera {
         let mut image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
         image_height = if image_height < 1 { 1 } else { image_height };
 
         let pixel_samples_scale = 1.0 / (self.samples_per_pixel as f64);
 
-        let center = Point3::default();
+        let center = self.look_from;
 
-        let focal_length = 1.0;
-        let viewport_height = 2.0;
+        let focal_length = (self.look_from - self.look_at).length();
+        let theta = degrees_to_radians(self.vertical_fov);
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * focal_length;
         let viewport_width = viewport_height * (self.image_width as f64 / image_height as f64);
 
-        let view_port_u = Vec3::new(viewport_width, 0.0, 0.0);
-        let view_port_v = Vec3::new(0.0, -viewport_height, 0.0);
+        let w = (self.look_from - self.look_at).unit();
+        let u = self.vup.cross(&w).unit();
+        let v = w.cross(&u).unit();
+
+        // let view_port_u = Vec3::new(viewport_width, 0.0, 0.0);
+        // let view_port_v = Vec3::new(0.0, -viewport_height, 0.0);
+        let view_port_u = viewport_width * u;
+        let view_port_v = viewport_height * -v;
 
         let pixel_delta_u = &view_port_u / self.image_width as f64;
         let pixel_delta_v = &view_port_v / image_height as f64;
-        let viewport_upper_left_vec = center.as_vec3()
-            - Vec3::new(0.0, 0.0, focal_length)
-            - (&view_port_u / 2.0)
-            - (&view_port_v / 2.0);
-        let viewport_upper_left: Point3 = viewport_upper_left_vec.into();
-        let pixel00_loc = viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v;
+        // let viewport_upper_left_vec = center.as_vec3()
+        //     - Vec3::new(0.0, 0.0, focal_length)
+        //     - (&view_port_u / 2.0)
+        //     - (&view_port_v / 2.0);
+        // let viewport_upper_left: Point3 = viewport_upper_left_vec.into();
+        let viewport_upper_left =
+            center.as_vec3() - focal_length * w - &view_port_u / 2.0 - &view_port_v / 2.0;
+        let pixel00_loc = (viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v).into();
 
         Camera {
             image_height,
@@ -103,6 +154,13 @@ impl CameraBuilder {
             pixel_samples_scale,
             samples_per_pixel: self.samples_per_pixel,
             max_depth: self.max_depth,
+            vertical_fov: self.vertical_fov,
+            look_from: self.look_from,
+            look_at: self.look_at,
+            vup: self.vup,
+            u,
+            v,
+            w,
         }
     }
 }
@@ -114,6 +172,10 @@ fn random_double() -> f64 {
 
 fn sample_square() -> Vec3 {
     Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
+}
+
+fn degrees_to_radians(degrees: f64) -> f64 {
+    degrees * std::f64::consts::PI / 180.0
 }
 
 impl Camera {
