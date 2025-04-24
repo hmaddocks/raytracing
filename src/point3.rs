@@ -1,7 +1,7 @@
 use crate::vec3::Vec3;
 use std::ops::{Add, Div, Mul, Sub};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub struct Point3(Vec3);
 
 impl Point3 {
@@ -28,12 +28,6 @@ impl Point3 {
     #[inline]
     pub fn as_vec3(&self) -> Vec3 {
         self.0
-    }
-}
-
-impl Default for Point3 {
-    fn default() -> Self {
-        Point3(Vec3::default())
     }
 }
 

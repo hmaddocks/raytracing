@@ -1,45 +1,75 @@
-use crate::hittable::HitRecord;
-use crate::hittable::Hittable;
+//! Sphere implementation for ray tracing.
+//!
+//! This module provides a `Sphere` struct that implements the `Hittable` trait,
+//! allowing rays to intersect with spheres in the scene.
+
+use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::material::Material;
 use crate::point3::Point3;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
+/// A sphere defined by its center point, radius, and material.
 #[derive(Debug, Clone)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
+    radius_squared: f64, // Pre-computed for efficiency
     material: Material,
 }
 
 impl Sphere {
+    /// Creates a new sphere with the given center, radius, and material.
+    ///
+    /// # Arguments
+    ///
+    /// * `center` - The center point of the sphere
+    /// * `radius` - The radius of the sphere
+    /// * `material` - The material of the sphere
+    ///
+    /// # Returns
+    ///
+    /// A new `Sphere` instance
+    #[inline]
     pub fn new(center: Point3, radius: f64, material: Material) -> Self {
-        Sphere {
+        Self {
             center,
             radius,
+            radius_squared: radius * radius,
             material,
         }
     }
 }
 
 impl Hittable for Sphere {
+    #[inline]
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
+        // Vector from ray origin to sphere center
         let oc = r.origin() - &self.center;
-        let a = r.direction().length_squared();
-        let half_b = oc.dot(&r.direction());
-        let c = oc.length_squared() - self.radius * self.radius;
 
+        // Coefficients of the quadratic equation for sphere intersection
+        // Using the optimized quadratic formula: ax² + 2bx + c = 0
+        // where b = half_b in our implementation
+        let a = r.direction().length_squared();
+        let half_b = oc.dot(r.direction());
+        let c = oc.length_squared() - self.radius_squared;
+
+        // Calculate discriminant to determine if ray intersects sphere
         let discriminant = half_b * half_b - a * c;
 
+        // Early return if no intersection (discriminant is negative)
         if discriminant < 0.0 {
             return None;
         }
 
         let sqrt_discriminant = discriminant.sqrt();
 
-        // Find the nearest root in the range [ray_tmin, ray_tmax]
+        // Find the nearest root in the acceptable range
+        // First try the closer intersection
         let mut root = (-half_b - sqrt_discriminant) / a;
+
+        // If closer intersection is not in range, try the farther one
         if !ray_t.surrounds(root) {
             root = (-half_b + sqrt_discriminant) / a;
             if !ray_t.surrounds(root) {
@@ -47,16 +77,23 @@ impl Hittable for Sphere {
             }
         }
 
+        // Calculate hit position
+        let position = r.at(root);
+
+        // Calculate outward normal at hit point (normalized vector from center to hit point)
+        let outward_normal = (position - self.center) / self.radius;
+
+        // Create hit record and set the normal based on ray direction
         let mut hit_record = HitRecord {
             t: root,
-            position: r.at(root),
+            position,
             normal: Vec3::default(),
             front_face: true,
             material: Some(self.material.clone()),
         };
 
-        let outward_normal = &(&hit_record.position - &self.center) / self.radius;
         hit_record.set_face_normal(r, &outward_normal);
+
         Some(hit_record)
     }
 }

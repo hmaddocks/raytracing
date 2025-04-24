@@ -6,9 +6,21 @@ use crate::ray::Ray;
 use crate::utilities::{degrees_to_radians, random_in_unit_disk, sample_square};
 use crate::vec3::Vec3;
 
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
+use std::f64;
 
+// Constants for common values
+const BLACK: Color = Color::new(0.0, 0.0, 0.0);
+const WHITE: Color = Color::new(1.0, 1.0, 1.0);
+const SKY_BLUE: Color = Color::new(0.5, 0.7, 1.0);
+const MIN_IMAGE_HEIGHT: u32 = 1;
+const RAY_T_MIN: f64 = 0.001;
+
+/// Camera for rendering a scene.
+///
+/// Handles ray generation and rendering of the scene to a PPM format.
+#[derive(Debug, Clone)]
 pub struct Camera {
     image_height: u32,
     image_width: u32,
@@ -24,6 +36,10 @@ pub struct Camera {
     defocus_disk_v: Vec3,
 }
 
+/// Builder for creating a customized camera.
+///
+/// Uses the builder pattern to configure camera parameters.
+#[derive(Debug, Clone)]
 pub struct CameraBuilder {
     aspect_ratio: f64,
     image_width: u32,
@@ -115,33 +131,41 @@ impl CameraBuilder {
         self
     }
 
+    /// Build the camera with the configured parameters.
     pub fn build(self) -> Camera {
-        let mut image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
-        image_height = if image_height < 1 { 1 } else { image_height };
+        // Calculate image height based on aspect ratio, ensuring it's at least 1
+        let image_height =
+            ((self.image_width as f64 / self.aspect_ratio) as u32).max(MIN_IMAGE_HEIGHT);
 
         let pixel_samples_scale = 1.0 / (self.samples_per_pixel as f64);
-
         let center = self.look_from;
 
-        // let focal_length = (self.look_from - self.look_at).length();
+        // Calculate viewport dimensions
         let theta = degrees_to_radians(self.vertical_fov);
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h * self.focus_dist;
         let viewport_width = viewport_height * (self.image_width as f64 / image_height as f64);
 
+        // Calculate camera basis vectors
         let w = (self.look_from - self.look_at).unit();
         let u = self.vup.cross(&w).unit();
         let v = w.cross(&u).unit();
 
+        // Calculate viewport vectors
         let view_port_u = viewport_width * u;
         let view_port_v = viewport_height * -v;
 
-        let pixel_delta_u = &view_port_u / self.image_width as f64;
-        let pixel_delta_v = &view_port_v / image_height as f64;
-        let viewport_upper_left =
-            center.as_vec3() - self.focus_dist * w - &view_port_u / 2.0 - &view_port_v / 2.0;
-        let pixel00_loc = (viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v).into();
+        // Calculate pixel delta vectors
+        let pixel_delta_u = view_port_u / self.image_width as f64;
+        let pixel_delta_v = view_port_v / image_height as f64;
 
+        // Calculate location of upper-left pixel
+        let viewport_upper_left =
+            center.as_vec3() - self.focus_dist * w - view_port_u / 2.0 - view_port_v / 2.0;
+        let pixel00_loc =
+            Point3::from(viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v);
+
+        // Calculate defocus disk vectors
         let defocus_radius = self.focus_dist * (degrees_to_radians(self.defocus_angle) / 2.0).tan();
         let defocus_disk_u = defocus_radius * u;
         let defocus_disk_v = defocus_radius * v;
@@ -164,52 +188,79 @@ impl CameraBuilder {
 }
 
 impl Camera {
+    /// Generate a ray from the camera through the specified pixel.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` - The x-coordinate of the pixel
+    /// * `j` - The y-coordinate of the pixel
     fn get_ray(&self, i: u32, j: u32) -> Ray {
+        // Get a random offset within the pixel for anti-aliasing
         let offset = sample_square();
-        let pixel_sample = &self.pixel00_loc
-            + ((i as f64 + offset.x()) * self.pixel_delta_u)
-            + ((j as f64 + offset.y()) * self.pixel_delta_v);
 
-        let ray_origin = if self.defocus_angle < 0.0 {
+        // Calculate the exact position on the viewport
+        let pixel_sample = self.pixel00_loc
+            + (i as f64 + offset.x()) * self.pixel_delta_u
+            + (j as f64 + offset.y()) * self.pixel_delta_v;
+
+        // Determine ray origin (either camera center or point on defocus disk)
+        let ray_origin = if self.defocus_angle <= 0.0 {
             self.center
         } else {
-            self.defocus_disk_sample().into()
+            Point3::from(self.defocus_disk_sample())
         };
+
         let ray_direction = pixel_sample - ray_origin;
         Ray::new(ray_origin, ray_direction)
     }
 
+    /// Sample a point on the defocus disk for depth-of-field effect.
     fn defocus_disk_sample(&self) -> Vec3 {
         let p = random_in_unit_disk();
-        self.center.as_vec3() + (p[0] * self.defocus_disk_u) + (p[1] * self.defocus_disk_v)
+        self.center.as_vec3() + (p.x() * self.defocus_disk_u) + (p.y() * self.defocus_disk_v)
     }
 
-    fn ray_color(&self, ray: &Ray, depth: u32, world: &HittableList) -> Color {
+    /// Calculate the color for a ray in the scene.
+    ///
+    /// # Arguments
+    ///
+    /// * `ray` - The ray to trace
+    /// * `depth` - The maximum recursion depth remaining
+    /// * `world` - The scene to render
+    fn ray_color(ray: &Ray, depth: u32, world: &HittableList) -> Color {
+        // If we've exceeded the ray bounce limit, no more light is gathered
         if depth == 0 {
-            return Color::new(0.0, 0.0, 0.0);
+            return BLACK;
         }
 
-        if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
+        // Check if the ray hits anything in the world
+        if let Some(hit_record) = world.hit(ray, Interval::new(RAY_T_MIN, f64::INFINITY)) {
+            // If there's a material, calculate scattered ray
             if let Some(material) = &hit_record.material {
                 let (attenuation, scatter) = material.scatter(ray, &hit_record);
-                self.ray_color(&scatter, depth - 1, world) * attenuation
-            } else {
-                Color::new(0.0, 0.0, 0.0)
+                return Self::ray_color(&scatter, depth - 1, world) * attenuation;
             }
-        } else {
-            let unit_direction = ray.direction().unit();
-            let a = 0.5 * (unit_direction.y() + 1.0);
-            Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a
+            return BLACK;
         }
+
+        // Background - a simple gradient
+        let unit_direction = ray.direction().unit();
+        let t = 0.5 * (unit_direction.y() + 1.0);
+        WHITE * (1.0 - t) + SKY_BLUE * t
     }
 
+    /// Render the scene to PPM format on stdout.
+    ///
+    /// # Arguments
+    ///
+    /// * `world` - The scene to render
     pub fn render(&self, world: &HittableList) {
         // Create a progress bar for tracking scanlines
         let progress_bar = ProgressBar::new(self.image_height as u64);
         progress_bar.set_style(
-            indicatif::ProgressStyle::default_bar()
+            ProgressStyle::default_bar()
                 .template("[{elapsed_precise}] [{bar:80.cyan/blue}] {pos}/{len} scanlines ({eta})")
-                .unwrap()
+                .expect("Invalid progress bar template")
                 .progress_chars("#>-"),
         );
 
@@ -221,16 +272,17 @@ impl Camera {
                 let row: Vec<Color> = (0..self.image_width)
                     .into_par_iter() // Parallelize over pixels in the scanline
                     .map(|i| {
-                        let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+                        // Start with black
+                        let mut pixel_color = BLACK;
 
                         // Sample each pixel multiple times for anti-aliasing
                         for _ in 0..self.samples_per_pixel {
                             let ray = self.get_ray(i, j);
-                            pixel_color += self.ray_color(&ray, self.max_depth, world);
+                            pixel_color += Self::ray_color(&ray, self.max_depth, world);
                         }
 
-                        pixel_color *= self.pixel_samples_scale;
-                        pixel_color
+                        // Scale the color by the number of samples
+                        pixel_color * self.pixel_samples_scale
                     })
                     .collect();
 
@@ -243,6 +295,7 @@ impl Camera {
         // Finish the progress bar
         progress_bar.finish_with_message("Rendering complete");
 
+        // Output PPM header
         println!("P3");
         println!("{} {}", self.image_width, self.image_height);
         println!("255");
@@ -250,7 +303,7 @@ impl Camera {
         // Output all scanlines
         for scanline in image {
             for pixel in scanline {
-                println!("{}", &pixel.write_color());
+                println!("{}", pixel.write_color());
             }
         }
     }
@@ -318,10 +371,9 @@ mod tests {
 
     #[test]
     fn test_ray_color_depth_zero() {
-        let camera = CameraBuilder::default().build();
         let ray = Ray::new(Point3::default(), Vec3::new(1.0, 0.0, 0.0));
         let world = HittableList::new();
-        let color = camera.ray_color(&ray, 0, &world);
+        let color = Camera::ray_color(&ray, 0, &world);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
 }
