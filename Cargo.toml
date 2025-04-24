@@ -1,8 +1,10 @@
+cargo-features = ["edition2024"]
+
 [package]
 name = "raytrace"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-rand = "0.8.5"
-rayon = "1.8.0"
+rand = "0.9"
+rayon = "1.10"
