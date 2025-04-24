@@ -3,8 +3,8 @@ use crate::hittable_list::HittableList;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::point3::Point3;
 use crate::sphere::Sphere;
+use crate::utilities::random_double;
 use crate::vec3::Vec3;
-use rand::Rng;
 
 mod camera;
 mod color;
@@ -15,12 +15,9 @@ mod material;
 mod point3;
 mod ray;
 mod sphere;
+mod utilities;
 mod vec3;
 
-fn random_double() -> f64 {
-    let mut rng = rand::thread_rng(); // Create a random number generator
-    rng.gen_range(0.0..1.0) // Generate a random f64 in the range [0.0, 1.0)
-}
 fn main() {
     // World
     let mut world = HittableList::new();

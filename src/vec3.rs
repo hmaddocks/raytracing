@@ -1,11 +1,6 @@
-use rand::Rng;
+use crate::utilities::random_double_range;
 use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
-
-fn random_double(min: f64, max: f64) -> f64 {
-    let mut rng = rand::thread_rng(); // Create a random number generator
-    rng.gen_range(min..max) // Generate a random f64 in the range [min, max)
-}
 
 /// 3D vector for geometric calculations.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -81,9 +76,9 @@ impl Vec3 {
     #[inline]
     pub fn random(min: f64, max: f64) -> Vec3 {
         Vec3::new(
-            random_double(min, max),
-            random_double(min, max),
-            random_double(min, max),
+            random_double_range(min, max),
+            random_double_range(min, max),
+            random_double_range(min, max),
         )
     }
 
@@ -114,7 +109,11 @@ impl Vec3 {
     #[inline]
     pub fn random_on_unit_disk() -> Vec3 {
         loop {
-            let p = Vec3::new(random_double(-1.0, 1.0), random_double(-1.0, 1.0), 0.0);
+            let p = Vec3::new(
+                random_double_range(-1.0, 1.0),
+                random_double_range(-1.0, 1.0),
+                0.0,
+            );
             let length_squared = p.length_squared();
             if length_squared < 1.0 {
                 return p;

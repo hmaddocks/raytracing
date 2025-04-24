@@ -3,9 +3,9 @@ use crate::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::point3::Point3;
 use crate::ray::Ray;
+use crate::utilities::{degrees_to_radians, random_in_unit_disk, sample_square};
 use crate::vec3::Vec3;
 
-use rand::Rng;
 use rayon::prelude::*;
 
 pub struct Camera {
@@ -162,29 +162,6 @@ impl CameraBuilder {
     }
 }
 
-fn random_double() -> f64 {
-    let mut rng = rand::thread_rng(); // Create a random number generator
-    rng.gen_range(0.0..1.0) // Generate a random f64 in the range [0.0, 1.0)
-}
-
-fn sample_square() -> Vec3 {
-    Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
-}
-
-fn random_in_unit_disk() -> Vec3 {
-    let mut rng = rand::thread_rng();
-    loop {
-        let p = Vec3::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.0);
-        if p.length_squared() < 1.0 {
-            return p;
-        }
-    }
-}
-
-fn degrees_to_radians(degrees: f64) -> f64 {
-    degrees * std::f64::consts::PI / 180.0
-}
-
 impl Camera {
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         let offset = sample_square();
@@ -270,6 +247,7 @@ mod tests {
     use crate::hittable_list::HittableList;
     use crate::point3::Point3;
     use crate::ray::Ray;
+    use crate::utilities::random_double;
     use crate::vec3::Vec3;
 
     #[test]
