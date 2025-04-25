@@ -33,12 +33,13 @@ impl Lambertian {
         Material::Lambertian(Lambertian { albedo })
     }
 
-    fn scatter(&self, _ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
         let mut scatter_direction = hit_record.normal + Vec3::random_unit();
         if scatter_direction.near_zero() {
             scatter_direction = hit_record.normal;
         }
-        let scatter = Ray::new(hit_record.position, scatter_direction);
+        let time = ray.time();
+        let scatter = Ray::new_with_time(hit_record.position, scatter_direction, time);
         (self.albedo, scatter)
     }
 }
@@ -59,7 +60,8 @@ impl Metal {
         // let reflected = hit_record.normal.reflect(&ray.direction());
         let mut reflected = ray.direction().reflect(&hit_record.normal);
         reflected = reflected.unit() + (Vec3::random_unit() * self.fuzz);
-        let scatter = Ray::new(hit_record.position, reflected);
+        let time = ray.time();
+        let scatter = Ray::new_with_time(hit_record.position, reflected, time);
         (self.albedo, scatter)
     }
 }
@@ -92,8 +94,11 @@ impl Dielectric {
         } else {
             unit_direction.refract(&hit_record.normal, ri)
         };
-
-        (attenuation, Ray::new(hit_record.position, direction))
+        let time = ray.time();
+        (
+            attenuation,
+            Ray::new_with_time(hit_record.position, direction, time),
+        )
     }
 
     fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
@@ -112,10 +117,11 @@ impl TestMaterial {
         Material::Test(TestMaterial)
     }
 
-    fn scatter(&self, _ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
         // Simple implementation that just returns white and a ray in the normal direction
         let scatter_direction = hit_record.normal;
-        let scatter = Ray::new(hit_record.position, scatter_direction);
+        let time = ray.time();
+        let scatter = Ray::new_with_time(hit_record.position, scatter_direction, time);
         (Color::new(1.0, 1.0, 1.0), scatter)
     }
 }

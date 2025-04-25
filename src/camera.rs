@@ -2,6 +2,7 @@ use crate::color::Color;
 use crate::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::point3::Point3;
+use crate::random_double;
 use crate::ray::Ray;
 use crate::utilities::{degrees_to_radians, random_in_unit_disk, sample_square};
 use crate::vec3::Vec3;
@@ -211,7 +212,8 @@ impl Camera {
         };
 
         let ray_direction = pixel_sample - ray_origin;
-        Ray::new(ray_origin, ray_direction)
+        let ray_time = random_double();
+        Ray::new_with_time(ray_origin, ray_direction, ray_time)
     }
 
     /// Sample a point on the defocus disk for depth-of-field effect.

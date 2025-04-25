@@ -45,7 +45,13 @@ fn main() {
                         random_double(),
                         random_double(),
                     ));
-                    world.add(Box::new(Sphere::new(center, 0.2, material.clone())));
+                    let center2 = center + Vec3::new(0.0, random_double() * 0.5, 0.0);
+                    world.add(Box::new(Sphere::moving_sphere(
+                        center,
+                        center2,
+                        0.2,
+                        material.clone(),
+                    )));
                 } else if choose_mat < 0.95 {
                     let material = Metal::new(
                         Color::new(random_double(), random_double(), random_double()),
@@ -85,7 +91,7 @@ fn main() {
     let camera = camera::CameraBuilder::new()
         .aspect_ratio(16.0 / 9.0)
         .image_width(800)
-        .samples_per_pixel(200)
+        .samples_per_pixel(100)
         .max_depth(50)
         .vertical_fov(20.0)
         .look_from(Point3::new(13.0, 2.0, 3.0))

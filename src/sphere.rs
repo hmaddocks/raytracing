@@ -14,6 +14,7 @@ use crate::vec3::Vec3;
 #[derive(Debug, Clone)]
 pub struct Sphere {
     center: Point3,
+    center_vec: Option<Vec3>, // For moving spheres: vector from center1 to center2
     radius: f64,
     radius_squared: f64, // Pre-computed for efficiency
     material: Material,
@@ -35,7 +36,23 @@ impl Sphere {
     pub fn new(center: Point3, radius: f64, material: Material) -> Self {
         Self {
             center,
-            radius,
+            center_vec: None,
+            radius: radius.max(0.0),
+            radius_squared: radius * radius,
+            material,
+        }
+    }
+
+    pub fn moving_sphere(
+        center1: Point3,
+        center2: Point3,
+        radius: f64,
+        material: Material,
+    ) -> Self {
+        Self {
+            center: center1,
+            center_vec: Some(center2 - center1),
+            radius: radius.max(0.0),
             radius_squared: radius * radius,
             material,
         }
@@ -45,8 +62,14 @@ impl Sphere {
 impl Hittable for Sphere {
     #[inline]
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
+        // Get the current center based on time (for moving spheres)
+        let current_center = match self.center_vec {
+            Some(center_vec) => self.center + center_vec * r.time(),
+            None => self.center,
+        };
+        
         // Vector from ray origin to sphere center
-        let oc = r.origin() - &self.center;
+        let oc = *r.origin() - current_center;
 
         // Coefficients of the quadratic equation for sphere intersection
         // Using the optimized quadratic formula: ax² + 2bx + c = 0
@@ -81,7 +104,7 @@ impl Hittable for Sphere {
         let position = r.at(root);
 
         // Calculate outward normal at hit point (normalized vector from center to hit point)
-        let outward_normal = (position - self.center) / self.radius;
+        let outward_normal = (position - current_center) / self.radius;
 
         // Create hit record and set the normal based on ray direction
         let mut hit_record = HitRecord {
