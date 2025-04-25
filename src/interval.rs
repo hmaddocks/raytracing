@@ -5,22 +5,27 @@ pub struct Interval {
 }
 
 impl Interval {
+    #[inline]
     pub fn new(min: f64, max: f64) -> Self {
         Interval { min, max }
     }
 
+    #[inline]
     pub fn size(&self) -> f64 {
         self.max - self.min
     }
 
+    #[inline]
     pub fn contains(&self, value: f64) -> bool {
         self.min <= value && value <= self.max
     }
 
+    #[inline]
     pub fn surrounds(&self, value: f64) -> bool {
         self.min < value && value < self.max
     }
 
+    #[inline]
     pub fn empty() -> Self {
         Interval {
             min: f64::INFINITY,
@@ -28,6 +33,7 @@ impl Interval {
         }
     }
 
+    #[inline]
     pub fn universe() -> Self {
         Interval {
             min: f64::NEG_INFINITY,
@@ -35,6 +41,7 @@ impl Interval {
         }
     }
 
+    #[inline]
     pub fn clamp(&self, value: f64) -> f64 {
         if value < self.min {
             self.min
@@ -42,6 +49,15 @@ impl Interval {
             self.max
         } else {
             value
+        }
+    }
+
+    #[inline]
+    pub fn expand(&self, delta: f64) -> Self {
+        let padding = delta / 2.0;
+        Interval {
+            min: self.min - padding,
+            max: self.max + padding,
         }
     }
 }

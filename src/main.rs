@@ -6,6 +6,7 @@ use crate::sphere::Sphere;
 use crate::utilities::random_double;
 use crate::vec3::Vec3;
 
+mod aabb;
 mod camera;
 mod color;
 mod hittable;
