@@ -52,12 +52,11 @@ pub struct Metal {
 
 impl Metal {
     pub fn new(albedo: Color, fuzz: f64) -> Material {
-        let fuzz = fuzz.clamp(0.0, 1.0); // Ensure fuzz is between 0 and 1
+        let fuzz = fuzz.clamp(0.0, 1.0);
         Material::Metal(Metal { albedo, fuzz })
     }
 
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
-        // let reflected = hit_record.normal.reflect(&ray.direction());
         let mut reflected = ray.direction().reflect(&hit_record.normal);
         reflected = reflected.unit() + (Vec3::random_unit() * self.fuzz);
         let time = ray.time();
@@ -94,6 +93,7 @@ impl Dielectric {
         } else {
             unit_direction.refract(&hit_record.normal, ri)
         };
+
         let time = ray.time();
         (
             attenuation,
