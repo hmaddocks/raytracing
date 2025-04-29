@@ -3,6 +3,7 @@
 //! This module provides a `Sphere` struct that implements the `Hittable` trait,
 //! allowing rays to intersect with spheres in the scene.
 
+use crate::aabb::Aabb;
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::material::Material;
@@ -18,6 +19,7 @@ pub struct Sphere {
     radius: f64,
     radius_squared: f64, // Pre-computed for efficiency
     material: Material,
+    bounding_box: Option<Aabb>,
 }
 
 impl Sphere {
@@ -40,6 +42,7 @@ impl Sphere {
             radius: radius.max(0.0),
             radius_squared: radius * radius,
             material,
+            bounding_box: None,
         }
     }
 
@@ -55,6 +58,7 @@ impl Sphere {
             radius: radius.max(0.0),
             radius_squared: radius * radius,
             material,
+            bounding_box: None,
         }
     }
 }
@@ -67,7 +71,7 @@ impl Hittable for Sphere {
             Some(center_vec) => self.center + center_vec * r.time(),
             None => self.center,
         };
-        
+
         // Vector from ray origin to sphere center
         let oc = *r.origin() - current_center;
 
@@ -118,6 +122,10 @@ impl Hittable for Sphere {
         hit_record.set_face_normal(r, &outward_normal);
 
         Some(hit_record)
+    }
+
+    fn bounding_box(&self) -> Option<Aabb> {
+        self.bounding_box
     }
 }
 

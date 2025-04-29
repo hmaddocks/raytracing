@@ -1,3 +1,4 @@
+use crate::aabb::Aabb;
 use crate::interval::Interval;
 use crate::material::Material;
 use crate::point3::Point3;
@@ -15,6 +16,7 @@ pub struct HitRecord {
 
 pub trait Hittable: Send + Sync {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord>;
+    fn bounding_box(&self) -> Option<Aabb>;
 }
 
 impl HitRecord {
