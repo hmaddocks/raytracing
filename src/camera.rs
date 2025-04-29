@@ -4,7 +4,7 @@ use crate::interval::Interval;
 use crate::point3::Point3;
 use crate::random_double;
 use crate::ray::Ray;
-use crate::utilities::{degrees_to_radians, random_in_unit_disk, sample_square};
+use crate::utilities::degrees_to_radians;
 use crate::vec3::Vec3;
 
 use indicatif::{ProgressBar, ProgressStyle};
@@ -197,7 +197,7 @@ impl Camera {
     /// * `j` - The y-coordinate of the pixel
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         // Get a random offset within the pixel for anti-aliasing
-        let offset = sample_square();
+        let offset = Vec3::sample_square();
 
         // Calculate the exact position on the viewport
         let pixel_sample = self.pixel00_loc
@@ -218,7 +218,7 @@ impl Camera {
 
     /// Sample a point on the defocus disk for depth-of-field effect.
     fn defocus_disk_sample(&self) -> Vec3 {
-        let p = random_in_unit_disk();
+        let p = Vec3::random_in_unit_disk();
         self.center.as_vec3() + (p.x() * self.defocus_disk_u) + (p.y() * self.defocus_disk_v)
     }
 
@@ -352,7 +352,7 @@ mod tests {
     #[test]
     fn test_sample_square_range() {
         for _ in 0..100 {
-            let v = sample_square();
+            let v = Vec3::sample_square();
             assert!(v.x() >= -0.5 && v.x() < 0.5);
             assert!(v.y() >= -0.5 && v.y() < 0.5);
             assert_eq!(v.z(), 0.0);
