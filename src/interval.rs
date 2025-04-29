@@ -10,36 +10,36 @@ impl Interval {
         Interval { min, max }
     }
 
-    #[inline]
-    pub fn size(&self) -> f64 {
-        self.max - self.min
-    }
+    // #[inline]
+    // pub fn size(&self) -> f64 {
+    //     self.max - self.min
+    // }
 
-    #[inline]
-    pub fn contains(&self, value: f64) -> bool {
-        self.min <= value && value <= self.max
-    }
+    // #[inline]
+    // pub fn contains(&self, value: f64) -> bool {
+    //     self.min <= value && value <= self.max
+    // }
 
     #[inline]
     pub fn surrounds(&self, value: f64) -> bool {
         self.min < value && value < self.max
     }
 
-    #[inline]
-    pub fn empty() -> Self {
-        Interval {
-            min: f64::INFINITY,
-            max: f64::NEG_INFINITY,
-        }
-    }
+    // #[inline]
+    // pub fn empty() -> Self {
+    //     Interval {
+    //         min: f64::INFINITY,
+    //         max: f64::NEG_INFINITY,
+    //     }
+    // }
 
-    #[inline]
-    pub fn universe() -> Self {
-        Interval {
-            min: f64::NEG_INFINITY,
-            max: f64::INFINITY,
-        }
-    }
+    // #[inline]
+    // pub fn universe() -> Self {
+    //     Interval {
+    //         min: f64::NEG_INFINITY,
+    //         max: f64::INFINITY,
+    //     }
+    // }
 
     #[inline]
     pub fn clamp(&self, value: f64) -> f64 {
@@ -101,33 +101,33 @@ mod tests {
         assert_eq!(interval.max, 0.0);
     }
 
-    #[test]
-    fn test_size() {
-        let interval = Interval::new(2.0, 5.5);
-        assert_eq!(interval.size(), 3.5);
-    }
+    // #[test]
+    // fn test_size() {
+    //     let interval = Interval::new(2.0, 5.5);
+    //     assert_eq!(interval.size(), 3.5);
+    // }
 
-    #[test]
-    fn test_contains() {
-        let interval = Interval::new(1.0, 4.0);
-        assert!(interval.contains(1.0));
-        assert!(interval.contains(4.0));
-        assert!(interval.contains(2.5));
-        assert!(!interval.contains(0.99));
-        assert!(!interval.contains(4.01));
-    }
+    // #[test]
+    // fn test_contains() {
+    //     let interval = Interval::new(1.0, 4.0);
+    //     assert!(interval.contains(1.0));
+    //     assert!(interval.contains(4.0));
+    //     assert!(interval.contains(2.5));
+    //     assert!(!interval.contains(0.99));
+    //     assert!(!interval.contains(4.01));
+    // }
 
-    #[test]
-    fn test_empty() {
-        let interval = Interval::empty();
-        assert_eq!(interval.min, f64::INFINITY);
-        assert_eq!(interval.max, f64::NEG_INFINITY);
-    }
+    // #[test]
+    // fn test_empty() {
+    //     let interval = Interval::empty();
+    //     assert_eq!(interval.min, f64::INFINITY);
+    //     assert_eq!(interval.max, f64::NEG_INFINITY);
+    // }
 
-    #[test]
-    fn test_universe() {
-        let interval = Interval::universe();
-        assert_eq!(interval.min, f64::NEG_INFINITY);
-        assert_eq!(interval.max, f64::INFINITY);
-    }
+    // #[test]
+    // fn test_universe() {
+    //     let interval = Interval::universe();
+    //     assert_eq!(interval.min, f64::NEG_INFINITY);
+    //     assert_eq!(interval.max, f64::INFINITY);
+    // }
 }
