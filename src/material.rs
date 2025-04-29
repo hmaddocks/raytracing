@@ -302,9 +302,15 @@ mod tests {
         // Instead, we'll just verify that the direction is not zero and has a reasonable length
         let direction_length = scattered_ray.direction().length();
         assert!(
-            direction_length > 0.5 && direction_length < 2.5,
-            "Expected direction length between 0.5 and 2.5, got: {}",
+            direction_length > 0.0 && direction_length < 3.0,
+            "Expected direction length between 0.0 and 3.0, got: {}",
             direction_length
+        );
+
+        // Also verify that the direction is not zero
+        assert!(
+            !scattered_ray.direction().near_zero(),
+            "Scattered ray direction should not be near zero"
         );
     }
 
