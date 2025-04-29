@@ -64,9 +64,8 @@ impl Hittable for Aabb {
         let ray_origin = ray.origin();
         let ray_direction = ray.direction();
 
-        // Create a mutable copy of the interval to work with
-        let mut t_min = ray_t.min;
-        let mut t_max = ray_t.max;
+        let mut t_min = ray_t.min();
+        let mut t_max = ray_t.max();
 
         for axis in 0..3 {
             let axis_interval = self.axis_interval(axis);
@@ -79,8 +78,8 @@ impl Hittable for Aabb {
                 _ => panic!("Invalid axis index"),
             };
 
-            let mut t0 = (axis_interval.min - origin_component) * inv_d;
-            let mut t1 = (axis_interval.max - origin_component) * inv_d;
+            let mut t0 = (axis_interval.min() - origin_component) * inv_d;
+            let mut t1 = (axis_interval.max() - origin_component) * inv_d;
 
             if inv_d < 0.0 {
                 std::mem::swap(&mut t0, &mut t1);
@@ -99,8 +98,8 @@ impl Hittable for Aabb {
         Some(HitRecord {
             t: t_min,
             position: ray.at(t_min),
-            normal: Vec3::new(1.0, 0.0, 0.0), // Arbitrary normal, not used for AABB
-            front_face: true,                 // Arbitrary, not used for AABB
+            normal: Vec3::default(), // Arbitrary normal, not used for AABB
+            front_face: true,        // Arbitrary, not used for AABB
             material: None,
         })
     }

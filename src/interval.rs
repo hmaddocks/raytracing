@@ -1,13 +1,23 @@
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Interval {
-    pub min: f64,
-    pub max: f64,
+    min: f64,
+    max: f64,
 }
 
 impl Interval {
     #[inline]
     pub fn new(min: f64, max: f64) -> Self {
         Interval { min, max }
+    }
+
+    #[inline]
+    pub fn min(&self) -> f64 {
+        self.min
+    }
+
+    #[inline]
+    pub fn max(&self) -> f64 {
+        self.max
     }
 
     // #[inline]
