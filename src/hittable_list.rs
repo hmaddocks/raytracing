@@ -20,11 +20,11 @@ impl HittableList {
 
     pub fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
         let mut hit_record = None;
-        let mut closest_so_far = ray_t.max;
+        let mut closest_so_far = ray_t.max();
 
         // Iterate through all objects and find the closest hit
         for object in &self.objects {
-            if let Some(hit) = object.hit(r, Interval::new(ray_t.min, closest_so_far)) {
+            if let Some(hit) = object.hit(r, Interval::new(ray_t.min(), closest_so_far)) {
                 closest_so_far = hit.t;
                 hit_record = Some(hit);
             }

@@ -2,7 +2,7 @@ use crate::color::Color;
 use crate::hittable_list::HittableList;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::point3::Point3;
-use crate::sphere::Sphere;
+use crate::sphere::{MovingSphere, Sphere};
 use crate::utilities::random_double;
 use crate::vec3::Vec3;
 
@@ -47,9 +47,9 @@ fn main() {
                         random_double(),
                     ));
                     let center2 = center + Vec3::new(0.0, random_double() * 0.5, 0.0);
-                    world.add(Box::new(Sphere::moving_sphere(
-                        center,
-                        center2,
+                    world.add(Box::new(MovingSphere::new(
+                        (center, center2),
+                        (0.0, 1.0),
                         0.2,
                         material.clone(),
                     )));
