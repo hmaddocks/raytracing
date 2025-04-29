@@ -14,7 +14,6 @@ use crate::vec3::Vec3;
 #[derive(Debug, Clone)]
 pub struct Sphere {
     center: Point3,
-    center_vec: Option<Vec3>, // For moving spheres: vector from center1 to center2
     radius: f64,
     radius_squared: f64, // Pre-computed for efficiency
     material: Material,
@@ -36,22 +35,6 @@ impl Sphere {
     pub fn new(center: Point3, radius: f64, material: Material) -> Self {
         Self {
             center,
-            center_vec: None,
-            radius: radius.max(0.0),
-            radius_squared: radius * radius,
-            material,
-        }
-    }
-
-    pub fn moving_sphere(
-        center1: Point3,
-        center2: Point3,
-        radius: f64,
-        material: Material,
-    ) -> Self {
-        Self {
-            center: center1,
-            center_vec: Some(center2 - center1),
             radius: radius.max(0.0),
             radius_squared: radius * radius,
             material,
@@ -61,21 +44,18 @@ impl Sphere {
 
 impl Hittable for Sphere {
     #[inline]
-    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
         // Get the current center based on time (for moving spheres)
-        let current_center = match self.center_vec {
-            Some(center_vec) => self.center + center_vec * r.time(),
-            None => self.center,
-        };
-        
+        let current_center = self.center;
+
         // Vector from ray origin to sphere center
-        let oc = *r.origin() - current_center;
+        let oc = *ray.origin() - current_center;
 
         // Coefficients of the quadratic equation for sphere intersection
         // Using the optimized quadratic formula: ax² + 2bx + c = 0
         // where b = half_b in our implementation
-        let a = r.direction().length_squared();
-        let half_b = oc.dot(r.direction());
+        let a = ray.direction().length_squared();
+        let half_b = oc.dot(ray.direction());
         let c = oc.length_squared() - self.radius_squared;
 
         // Calculate discriminant to determine if ray intersects sphere
@@ -101,7 +81,7 @@ impl Hittable for Sphere {
         }
 
         // Calculate hit position
-        let position = r.at(root);
+        let position = ray.at(root);
 
         // Calculate outward normal at hit point (normalized vector from center to hit point)
         let outward_normal = (position - current_center) / self.radius;
@@ -115,7 +95,95 @@ impl Hittable for Sphere {
             material: Some(self.material.clone()),
         };
 
-        hit_record.set_face_normal(r, &outward_normal);
+        hit_record.set_face_normal(ray, &outward_normal);
+
+        Some(hit_record)
+    }
+}
+
+pub struct MovingSphere {
+    center: (Point3, Point3),
+    time: (f64, f64),
+    radius: f64,
+    radius_squared: f64, // Pre-computed for efficiency
+    material: Material,
+}
+
+impl MovingSphere {
+    pub fn new(
+        center: (Point3, Point3),
+        time: (f64, f64),
+        radius: f64,
+        material: Material,
+    ) -> Self {
+        Self {
+            center,
+            time,
+            radius: radius.max(0.0),
+            radius_squared: radius * radius,
+            material,
+        }
+    }
+
+    pub fn center_at(&self, time: f64) -> Point3 {
+        self.center.0
+            + (self.center.1 - self.center.0) * (time - self.time.0) / (self.time.1 - self.time.0)
+    }
+}
+
+impl Hittable for MovingSphere {
+    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
+        // Get the current center based on time (for moving spheres)
+        let current_center = self.center_at(ray.time());
+
+        // Vector from ray origin to sphere center
+        let oc = *ray.origin() - current_center;
+
+        // Coefficients of the quadratic equation for sphere intersection
+        // Using the optimized quadratic formula: ax² + 2bx + c = 0
+        // where b = half_b in our implementation
+        let a = ray.direction().length_squared();
+        let half_b = oc.dot(ray.direction());
+        let c = oc.length_squared() - self.radius_squared;
+
+        // Calculate discriminant to determine if ray intersects sphere
+        let discriminant = half_b * half_b - a * c;
+
+        // Early return if no intersection (discriminant is negative)
+        if discriminant < 0.0 {
+            return None;
+        }
+
+        let sqrt_discriminant = discriminant.sqrt();
+
+        // Find the nearest root in the acceptable range
+        // First try the closer intersection
+        let mut root = (-half_b - sqrt_discriminant) / a;
+
+        // If closer intersection is not in range, try the farther one
+        if !ray_t.surrounds(root) {
+            root = (-half_b + sqrt_discriminant) / a;
+            if !ray_t.surrounds(root) {
+                return None;
+            }
+        }
+
+        // Calculate hit position
+        let position = ray.at(root);
+
+        // Calculate outward normal at hit point (normalized vector from center to hit point)
+        let outward_normal = (position - current_center) / self.radius;
+
+        // Create hit record and set the normal based on ray direction
+        let mut hit_record = HitRecord {
+            t: root,
+            position,
+            normal: Vec3::default(),
+            front_face: true,
+            material: Some(self.material.clone()),
+        };
+
+        hit_record.set_face_normal(ray, &outward_normal);
 
         Some(hit_record)
     }
