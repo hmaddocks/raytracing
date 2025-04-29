@@ -47,6 +47,14 @@ impl Aabb {
     //         },
     //     }
     // }
+    #[inline]
+    pub fn surrounding(a: &Aabb, b: &Aabb) -> Self {
+        Self {
+            x: Interval::new(a.x.min(), b.x.max()),
+            y: Interval::new(a.y.min(), b.y.max()),
+            z: Interval::new(a.z.min(), b.z.max()),
+        }
+    }
 
     #[inline]
     pub fn axis_interval(&self, axis: usize) -> Interval {
@@ -105,7 +113,7 @@ impl Hittable for Aabb {
         })
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
+    fn bounding_box(&self, _: f64, _: f64) -> Option<Aabb> {
         Some(*self)
     }
 }

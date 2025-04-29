@@ -41,14 +41,6 @@ impl Sphere {
             material,
         }
     }
-
-    pub fn bounding_box(&self, _time: f64) -> Option<Aabb> {
-        Some(Aabb::new(
-            Interval::new(self.center.x() - self.radius, self.center.x() + self.radius),
-            Interval::new(self.center.y() - self.radius, self.center.y() + self.radius),
-            Interval::new(self.center.z() - self.radius, self.center.z() + self.radius),
-        ))
-    }
 }
 
 impl Hittable for Sphere {
@@ -110,8 +102,12 @@ impl Hittable for Sphere {
     }
 
     #[inline]
-    fn bounding_box(&self) -> Option<Aabb> {
-        self.bounding_box(0.0)
+    fn bounding_box(&self, _: f64, _: f64) -> Option<Aabb> {
+        Some(Aabb::new(
+            Interval::new(self.center.x() - self.radius, self.center.x() + self.radius),
+            Interval::new(self.center.y() - self.radius, self.center.y() + self.radius),
+            Interval::new(self.center.z() - self.radius, self.center.z() + self.radius),
+        ))
     }
 }
 
@@ -144,13 +140,20 @@ impl MovingSphere {
             + (self.center.1 - self.center.0) * (time - self.time.0) / (self.time.1 - self.time.0)
     }
 
-    pub fn bounding_box(&self, time: f64) -> Option<Aabb> {
-        let center = self.center_at(time);
-        Some(Aabb::new(
-            Interval::new(center.x() - self.radius, center.x() + self.radius),
-            Interval::new(center.y() - self.radius, center.y() + self.radius),
-            Interval::new(center.z() - self.radius, center.z() + self.radius),
-        ))
+    pub fn bounding_box(&self, time0: f64, time1: f64) -> Option<Aabb> {
+        let center0 = self.center_at(time0);
+        let center1 = self.center_at(time1);
+        let bbox0 = Aabb::new(
+            Interval::new(center0.x() - self.radius, center0.x() + self.radius),
+            Interval::new(center0.y() - self.radius, center0.y() + self.radius),
+            Interval::new(center0.z() - self.radius, center0.z() + self.radius),
+        );
+        let bbox1 = Aabb::new(
+            Interval::new(center1.x() - self.radius, center1.x() + self.radius),
+            Interval::new(center1.y() - self.radius, center1.y() + self.radius),
+            Interval::new(center1.z() - self.radius, center1.z() + self.radius),
+        );
+        Some(Aabb::surrounding(&bbox0, &bbox1))
     }
 }
 
@@ -211,8 +214,36 @@ impl Hittable for MovingSphere {
         Some(hit_record)
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
-        self.bounding_box(0.0)
+    fn bounding_box(&self, _: f64, _: f64) -> Option<Aabb> {
+        let bbox0 = Aabb::new(
+            Interval::new(
+                self.center.0.x() - self.radius,
+                self.center.0.x() + self.radius,
+            ),
+            Interval::new(
+                self.center.0.y() - self.radius,
+                self.center.0.y() + self.radius,
+            ),
+            Interval::new(
+                self.center.0.z() - self.radius,
+                self.center.0.z() + self.radius,
+            ),
+        );
+        let bbox1 = Aabb::new(
+            Interval::new(
+                self.center.1.x() - self.radius,
+                self.center.1.x() + self.radius,
+            ),
+            Interval::new(
+                self.center.1.y() - self.radius,
+                self.center.1.y() + self.radius,
+            ),
+            Interval::new(
+                self.center.1.z() - self.radius,
+                self.center.1.z() + self.radius,
+            ),
+        );
+        Some(Aabb::surrounding(&bbox0, &bbox1))
     }
 }
 
