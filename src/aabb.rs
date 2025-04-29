@@ -63,7 +63,7 @@ impl Hittable for Aabb {
     fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
         let ray_origin = ray.origin();
         let ray_direction = ray.direction();
-        
+
         // Create a mutable copy of the interval to work with
         let mut t_min = ray_t.min;
         let mut t_max = ray_t.max;
@@ -78,7 +78,7 @@ impl Hittable for Aabb {
                 2 => ray_origin.z(),
                 _ => panic!("Invalid axis index"),
             };
-            
+
             let mut t0 = (axis_interval.min - origin_component) * inv_d;
             let mut t1 = (axis_interval.max - origin_component) * inv_d;
 
@@ -128,7 +128,7 @@ mod tests {
         let y = Interval::new(3.0, 4.0);
         let z = Interval::new(5.0, 6.0);
         let aabb = Aabb::new(x, y, z);
-        
+
         assert_eq!(aabb.x, x);
         assert_eq!(aabb.y, y);
         assert_eq!(aabb.z, z);
@@ -140,22 +140,22 @@ mod tests {
         let a = Point3::new(1.0, 2.0, 3.0);
         let b = Point3::new(4.0, 5.0, 6.0);
         let aabb = Aabb::other_new(a, b);
-        
+
         assert_eq!(aabb.x, Interval::new(1.0, 4.0));
         assert_eq!(aabb.y, Interval::new(2.0, 5.0));
         assert_eq!(aabb.z, Interval::new(3.0, 6.0));
-        
+
         // Test when a > b for all coordinates
         let aabb = Aabb::other_new(b, a);
         assert_eq!(aabb.x, Interval::new(1.0, 4.0));
         assert_eq!(aabb.y, Interval::new(2.0, 5.0));
         assert_eq!(aabb.z, Interval::new(3.0, 6.0));
-        
+
         // Test when a and b are mixed
         let c = Point3::new(0.0, 5.0, 2.0);
         let d = Point3::new(3.0, 1.0, 7.0);
         let aabb = Aabb::other_new(c, d);
-        
+
         assert_eq!(aabb.x, Interval::new(0.0, 3.0));
         assert_eq!(aabb.y, Interval::new(1.0, 5.0));
         assert_eq!(aabb.z, Interval::new(2.0, 7.0));
@@ -168,7 +168,7 @@ mod tests {
             Interval::new(3.0, 4.0),
             Interval::new(5.0, 6.0),
         );
-        
+
         assert_eq!(aabb.axis_interval(0), Interval::new(1.0, 2.0));
         assert_eq!(aabb.axis_interval(1), Interval::new(3.0, 4.0));
         assert_eq!(aabb.axis_interval(2), Interval::new(5.0, 6.0));
@@ -229,11 +229,11 @@ mod tests {
         );
         // Ray that would hit the box, but t interval excludes the hit
         let ray = Ray::new(Point3::new(-1.0, 0.5, 0.5), Vec3::new(1.0, 0.0, 0.0));
-        
+
         // Hit should be at t=1.0, so this interval should include it
         let hit1 = aabb.hit(&ray, Interval::new(0.5, 2.0));
         assert!(hit1.is_some());
-        
+
         // This interval excludes the hit
         let hit2 = aabb.hit(&ray, Interval::new(2.0, 3.0));
         assert!(hit2.is_none());
@@ -261,14 +261,23 @@ mod tests {
         );
         // Ray parallel to x-axis
         let ray1 = Ray::new(Point3::new(-1.0, 0.5, 0.5), Vec3::new(1.0, 0.0, 0.0));
-        assert!(aabb.hit(&ray1, Interval::new(0.001, f64::INFINITY)).is_some());
-        
+        assert!(
+            aabb.hit(&ray1, Interval::new(0.001, f64::INFINITY))
+                .is_some()
+        );
+
         // Ray parallel to y-axis
         let ray2 = Ray::new(Point3::new(0.5, -1.0, 0.5), Vec3::new(0.0, 1.0, 0.0));
-        assert!(aabb.hit(&ray2, Interval::new(0.001, f64::INFINITY)).is_some());
-        
+        assert!(
+            aabb.hit(&ray2, Interval::new(0.001, f64::INFINITY))
+                .is_some()
+        );
+
         // Ray parallel to z-axis
         let ray3 = Ray::new(Point3::new(0.5, 0.5, -1.0), Vec3::new(0.0, 0.0, 1.0));
-        assert!(aabb.hit(&ray3, Interval::new(0.001, f64::INFINITY)).is_some());
+        assert!(
+            aabb.hit(&ray3, Interval::new(0.001, f64::INFINITY))
+                .is_some()
+        );
     }
 }

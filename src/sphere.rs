@@ -3,6 +3,7 @@
 //! This module provides a `Sphere` struct that implements the `Hittable` trait,
 //! allowing rays to intersect with spheres in the scene.
 
+use crate::aabb::Aabb;
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::material::Material;
@@ -39,6 +40,14 @@ impl Sphere {
             radius_squared: radius * radius,
             material,
         }
+    }
+
+    pub fn bounding_box(&self, _time: f64) -> Option<Aabb> {
+        Some(Aabb::new(
+            Interval::new(self.center.x() - self.radius, self.center.x() + self.radius),
+            Interval::new(self.center.y() - self.radius, self.center.y() + self.radius),
+            Interval::new(self.center.z() - self.radius, self.center.z() + self.radius),
+        ))
     }
 }
 
@@ -128,6 +137,15 @@ impl MovingSphere {
     pub fn center_at(&self, time: f64) -> Point3 {
         self.center.0
             + (self.center.1 - self.center.0) * (time - self.time.0) / (self.time.1 - self.time.0)
+    }
+
+    pub fn bounding_box(&self, time: f64) -> Option<Aabb> {
+        let center = self.center_at(time);
+        Some(Aabb::new(
+            Interval::new(center.x() - self.radius, center.x() + self.radius),
+            Interval::new(center.y() - self.radius, center.y() + self.radius),
+            Interval::new(center.z() - self.radius, center.z() + self.radius),
+        ))
     }
 }
 
