@@ -62,14 +62,14 @@ impl Interval {
         }
     }
 
-    // #[inline]
-    // pub fn expand(&self, delta: f64) -> Self {
-    //     let padding = delta / 2.0;
-    //     Interval {
-    //         min: self.min - padding,
-    //         max: self.max + padding,
-    //     }
-    // }
+    #[inline]
+    pub fn expand(&self, delta: f64) -> Self {
+        let padding = delta / 2.0;
+        Interval {
+            min: self.min - padding,
+            max: self.max + padding,
+        }
+    }
 }
 
 impl Default for Interval {
