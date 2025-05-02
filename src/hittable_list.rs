@@ -45,7 +45,7 @@ mod tests {
     #[test]
     fn test_hittable_list_empty() {
         let list = HittableList::new();
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // An empty list should not hit anything
         let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -64,7 +64,7 @@ mod tests {
         )));
 
         // Create a ray that should hit the sphere
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Check if the ray hits the list
         let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -100,7 +100,7 @@ mod tests {
         ))); // Farther sphere
 
         // Create a ray that should hit both spheres
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Check if the ray hits the list
         let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -136,7 +136,7 @@ mod tests {
         ))); // Closer sphere
 
         // Create a ray that should hit both spheres
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Check if the ray hits the list
         let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -173,7 +173,7 @@ mod tests {
         ))); // Farther sphere
 
         // Create a ray that should hit both spheres
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Test with t_min that excludes the closer sphere
         let hit_record = list.hit(&ray, Interval::new(3.0, f64::INFINITY));
@@ -212,7 +212,7 @@ mod tests {
         ))); // Off to the side
 
         // Create a ray that should miss both spheres
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Check if the ray hits the list
         let hit_record = list.hit(&ray, Interval::new(0.001, f64::INFINITY));

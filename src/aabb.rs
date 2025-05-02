@@ -1,6 +1,5 @@
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
-use crate::point3::Point3;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
@@ -27,26 +26,6 @@ impl Aabb {
         Self { x, y, z }
     }
 
-    // Naming things is hard.
-    // pub fn new_points(a: &Point3, b: &Point3) -> Self {
-    //     Self {
-    //         x: if a.x() < b.x() {
-    //             Interval::new(a.x(), b.x())
-    //         } else {
-    //             Interval::new(b.x(), a.x())
-    //         },
-    //         y: if a.y() < b.y() {
-    //             Interval::new(a.y(), b.y())
-    //         } else {
-    //             Interval::new(b.y(), a.y())
-    //         },
-    //         z: if a.z() < b.z() {
-    //             Interval::new(a.z(), b.z())
-    //         } else {
-    //             Interval::new(b.z(), a.z())
-    //         },
-    //     }
-    // }
     #[inline]
     pub fn surrounding(a: &Aabb, b: &Aabb) -> Self {
         Self {
@@ -135,7 +114,7 @@ mod tests {
     }
 
     #[test]
-    fn test_new_intervals() {
+    fn test_new() {
         let x = Interval::new(1.0, 2.0);
         let y = Interval::new(3.0, 4.0);
         let z = Interval::new(5.0, 6.0);
@@ -174,7 +153,7 @@ mod tests {
             Interval::new(0.0, 1.0),
         );
         // Ray starting inside the box
-        let ray = Ray::new(Point3::new(0.5, 0.5, 0.5), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.5, 0.5, 0.5), Vec3::new(0.0, 0.0, 1.0), 0.0);
         let hit = aabb.hit(&ray, Interval::new(0.001, f64::INFINITY));
         assert!(hit.is_some());
     }
@@ -187,7 +166,7 @@ mod tests {
             Interval::new(0.0, 1.0),
         );
         // Ray starting outside the box and hitting it
-        let ray = Ray::new(Point3::new(-1.0, 0.5, 0.5), Vec3::new(1.0, 0.0, 0.0));
+        let ray = Ray::new(Point3::new(-1.0, 0.5, 0.5), Vec3::new(1.0, 0.0, 0.0), 0.0);
         let hit = aabb.hit(&ray, Interval::new(0.001, f64::INFINITY));
         assert!(hit.is_some());
     }
@@ -200,7 +179,11 @@ mod tests {
             Interval::new(0.0, 1.0),
         );
         // Ray completely missing the box
-        let ray = Ray::new(Point3::new(-1.0, -1.0, -1.0), Vec3::new(-1.0, -1.0, -1.0));
+        let ray = Ray::new(
+            Point3::new(-1.0, -1.0, -1.0),
+            Vec3::new(-1.0, -1.0, -1.0),
+            0.0,
+        );
         let hit = aabb.hit(&ray, Interval::new(0.001, f64::INFINITY));
         assert!(hit.is_none());
     }
@@ -213,7 +196,7 @@ mod tests {
             Interval::new(0.0, 1.0),
         );
         // Ray that would hit the box, but t interval excludes the hit
-        let ray = Ray::new(Point3::new(-1.0, 0.5, 0.5), Vec3::new(1.0, 0.0, 0.0));
+        let ray = Ray::new(Point3::new(-1.0, 0.5, 0.5), Vec3::new(1.0, 0.0, 0.0), 0.0);
 
         // Hit should be at t=1.0, so this interval should include it
         let hit1 = aabb.hit(&ray, Interval::new(0.5, 2.0));
@@ -232,7 +215,7 @@ mod tests {
             Interval::new(0.0, 1.0),
         );
         // Ray with negative direction components
-        let ray = Ray::new(Point3::new(2.0, 2.0, 2.0), Vec3::new(-1.0, -1.0, -1.0));
+        let ray = Ray::new(Point3::new(2.0, 2.0, 2.0), Vec3::new(-1.0, -1.0, -1.0), 0.0);
         let hit = aabb.hit(&ray, Interval::new(0.001, f64::INFINITY));
         assert!(hit.is_some());
     }
@@ -245,21 +228,21 @@ mod tests {
             Interval::new(0.0, 1.0),
         );
         // Ray parallel to x-axis
-        let ray1 = Ray::new(Point3::new(-1.0, 0.5, 0.5), Vec3::new(1.0, 0.0, 0.0));
+        let ray1 = Ray::new(Point3::new(-1.0, 0.5, 0.5), Vec3::new(1.0, 0.0, 0.0), 0.0);
         assert!(
             aabb.hit(&ray1, Interval::new(0.001, f64::INFINITY))
                 .is_some()
         );
 
         // Ray parallel to y-axis
-        let ray2 = Ray::new(Point3::new(0.5, -1.0, 0.5), Vec3::new(0.0, 1.0, 0.0));
+        let ray2 = Ray::new(Point3::new(0.5, -1.0, 0.5), Vec3::new(0.0, 1.0, 0.0), 0.0);
         assert!(
             aabb.hit(&ray2, Interval::new(0.001, f64::INFINITY))
                 .is_some()
         );
 
         // Ray parallel to z-axis
-        let ray3 = Ray::new(Point3::new(0.5, 0.5, -1.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray3 = Ray::new(Point3::new(0.5, 0.5, -1.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
         assert!(
             aabb.hit(&ray3, Interval::new(0.001, f64::INFINITY))
                 .is_some()

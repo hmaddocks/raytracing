@@ -10,16 +10,7 @@ pub struct Ray {
 
 impl Ray {
     #[inline]
-    pub const fn new(origin: Point3, direction: Vec3) -> Ray {
-        Ray {
-            origin,
-            direction,
-            time: 0.0,
-        }
-    }
-
-    #[inline]
-    pub const fn new_with_time(origin: Point3, direction: Vec3, time: f64) -> Ray {
+    pub const fn new(origin: Point3, direction: Vec3, time: f64) -> Ray {
         Ray {
             origin,
             direction,
@@ -56,7 +47,7 @@ mod tests {
     fn test_ray_creation() {
         let origin = Point3::new(1.0, 2.0, 3.0);
         let direction = Vec3::new(4.0, 5.0, 6.0);
-        let ray = Ray::new(origin, direction);
+        let ray = Ray::new(origin, direction, 0.0);
 
         assert_eq!(ray.origin().x(), 1.0);
         assert_eq!(ray.origin().y(), 2.0);
@@ -71,7 +62,7 @@ mod tests {
     fn test_ray_at() {
         let origin = Point3::new(1.0, 2.0, 3.0);
         let direction = Vec3::new(4.0, 5.0, 6.0);
-        let ray = Ray::new(origin, direction);
+        let ray = Ray::new(origin, direction, 0.0);
 
         // Test at t = 0
         let point_at_zero = ray.at(0.0);

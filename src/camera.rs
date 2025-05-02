@@ -213,7 +213,7 @@ impl Camera {
 
         let ray_direction = pixel_sample - ray_origin;
         let ray_time = random_double();
-        Ray::new_with_time(ray_origin, ray_direction, ray_time)
+        Ray::new(ray_origin, ray_direction, ray_time)
     }
 
     /// Sample a point on the defocus disk for depth-of-field effect.
@@ -373,7 +373,7 @@ mod tests {
 
     #[test]
     fn test_ray_color_depth_zero() {
-        let ray = Ray::new(Point3::default(), Vec3::new(1.0, 0.0, 0.0));
+        let ray = Ray::new(Point3::default(), Vec3::new(1.0, 0.0, 0.0), 0.0);
         let world = HittableList::new();
         let color = Camera::ray_color(&ray, 0, &world);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));

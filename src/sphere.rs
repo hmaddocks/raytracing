@@ -139,22 +139,6 @@ impl MovingSphere {
         self.center.0
             + (self.center.1 - self.center.0) * (time - self.time.0) / (self.time.1 - self.time.0)
     }
-
-    pub fn bounding_box(&self, time0: f64, time1: f64) -> Option<Aabb> {
-        let center0 = self.center_at(time0);
-        let center1 = self.center_at(time1);
-        let bbox0 = Aabb::new(
-            Interval::new(center0.x() - self.radius, center0.x() + self.radius),
-            Interval::new(center0.y() - self.radius, center0.y() + self.radius),
-            Interval::new(center0.z() - self.radius, center0.z() + self.radius),
-        );
-        let bbox1 = Aabb::new(
-            Interval::new(center1.x() - self.radius, center1.x() + self.radius),
-            Interval::new(center1.y() - self.radius, center1.y() + self.radius),
-            Interval::new(center1.z() - self.radius, center1.z() + self.radius),
-        );
-        Some(Aabb::surrounding(&bbox0, &bbox1))
-    }
 }
 
 impl Hittable for MovingSphere {
@@ -259,7 +243,7 @@ mod tests {
         let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray that should hit the sphere
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Check if the ray hits the sphere
         let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -290,7 +274,7 @@ mod tests {
         let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray that should hit the sphere tangentially
-        let ray = Ray::new(Point3::new(0.0, 1.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 1.0, -5.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Check if the ray hits the sphere
         let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -310,7 +294,7 @@ mod tests {
         let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray that should miss the sphere
-        let ray = Ray::new(Point3::new(0.0, 2.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 2.0, -5.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Check if the ray hits the sphere
         let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -325,7 +309,7 @@ mod tests {
         let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray from inside the sphere
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // Check if the ray hits the sphere
         let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -344,7 +328,7 @@ mod tests {
         let sphere = Sphere::new(Point3::new(0.0, 0.0, 5.0), 1.0, TestMaterial::new());
 
         // Create a ray pointing away from the sphere
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0), 0.0);
 
         // Check if the ray hits the sphere
         let hit_record = sphere.hit(&ray, Interval::new(0.001, f64::INFINITY));
@@ -359,7 +343,7 @@ mod tests {
         let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0, TestMaterial::new());
 
         // Create a ray that should hit the sphere
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
 
         // The ray hits at t=4 (front) and t=6 (back)
 

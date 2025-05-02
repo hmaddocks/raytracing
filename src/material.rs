@@ -39,7 +39,7 @@ impl Lambertian {
             scatter_direction = hit_record.normal;
         }
         let time = ray.time();
-        let scatter = Ray::new_with_time(hit_record.position, scatter_direction, time);
+        let scatter = Ray::new(hit_record.position, scatter_direction, time);
         (self.albedo, scatter)
     }
 }
@@ -60,7 +60,7 @@ impl Metal {
         let mut reflected = ray.direction().reflect(&hit_record.normal);
         reflected = reflected.unit() + (Vec3::random_unit() * self.fuzz);
         let time = ray.time();
-        let scatter = Ray::new_with_time(hit_record.position, reflected, time);
+        let scatter = Ray::new(hit_record.position, reflected, time);
         (self.albedo, scatter)
     }
 }
@@ -95,10 +95,7 @@ impl Dielectric {
         };
 
         let time = ray.time();
-        (
-            attenuation,
-            Ray::new_with_time(hit_record.position, direction, time),
-        )
+        (attenuation, Ray::new(hit_record.position, direction, time))
     }
 
     fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
@@ -121,7 +118,7 @@ impl TestMaterial {
         // Simple implementation that just returns white and a ray in the normal direction
         let scatter_direction = hit_record.normal;
         let time = ray.time();
-        let scatter = Ray::new_with_time(hit_record.position, scatter_direction, time);
+        let scatter = Ray::new(hit_record.position, scatter_direction, time);
         (Color::new(1.0, 1.0, 1.0), scatter)
     }
 }
@@ -162,7 +159,7 @@ mod tests {
         let albedo = Color::new(0.5, 0.5, 0.5);
         let material = Lambertian::new(albedo);
 
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
         let hit_point = Point3::new(0.0, 0.0, 1.0);
         let normal = Vec3::new(0.0, 0.0, -1.0); // Surface normal pointing back
 
@@ -236,7 +233,7 @@ mod tests {
 
         // Create a ray coming in at 45 degrees
         let ray_dir = Vec3::new(1.0, -1.0, 0.0).unit();
-        let ray = Ray::new(Point3::new(0.0, 1.0, 0.0), ray_dir);
+        let ray = Ray::new(Point3::new(0.0, 1.0, 0.0), ray_dir, 0.0);
 
         // Hit point is where the ray intersects the xz-plane
         let hit_point = Point3::new(1.0, 0.0, 0.0);
@@ -276,7 +273,7 @@ mod tests {
 
         // Create a ray coming in at 45 degrees
         let ray_dir = Vec3::new(1.0, -1.0, 0.0).unit();
-        let ray = Ray::new(Point3::new(0.0, 1.0, 0.0), ray_dir);
+        let ray = Ray::new(Point3::new(0.0, 1.0, 0.0), ray_dir, 0.0);
 
         // Hit point is where the ray intersects the xz-plane
         let hit_point = Point3::new(1.0, 0.0, 0.0);
@@ -327,7 +324,7 @@ mod tests {
     fn test_test_material_scatter() {
         let material = TestMaterial::new();
 
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
         let hit_point = Point3::new(0.0, 0.0, 1.0);
         let normal = Vec3::new(0.0, 0.0, -1.0);
 
@@ -355,7 +352,7 @@ mod tests {
         let albedo = Color::new(0.5, 0.5, 0.5);
         let lambertian = Lambertian::new(albedo);
 
-        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
         let hit_point = Point3::new(0.0, 0.0, 1.0);
         let normal = Vec3::new(0.0, 0.0, -1.0);
 
