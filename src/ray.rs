@@ -29,13 +29,13 @@ impl Ray {
     }
 
     #[inline]
-    pub fn at(&self, t: f64) -> Point3 {
-        self.origin + self.direction * t
+    pub fn time(&self) -> f64 {
+        self.time
     }
 
     #[inline]
-    pub fn time(&self) -> f64 {
-        self.time
+    pub fn at_time(&self, t: f64) -> Point3 {
+        self.origin + self.direction * t
     }
 }
 
@@ -65,19 +65,19 @@ mod tests {
         let ray = Ray::new(origin, direction, 0.0);
 
         // Test at t = 0
-        let point_at_zero = ray.at(0.0);
+        let point_at_zero = ray.at_time(0.0);
         assert_eq!(point_at_zero.x(), 1.0);
         assert_eq!(point_at_zero.y(), 2.0);
         assert_eq!(point_at_zero.z(), 3.0);
 
         // Test at t = 1
-        let point_at_one = ray.at(1.0);
+        let point_at_one = ray.at_time(1.0);
         assert_eq!(point_at_one.x(), 5.0); // 1 + 4*1
         assert_eq!(point_at_one.y(), 7.0); // 2 + 5*1
         assert_eq!(point_at_one.z(), 9.0); // 3 + 6*1
 
         // Test at t = 2
-        let point_at_two = ray.at(2.0);
+        let point_at_two = ray.at_time(2.0);
         assert_eq!(point_at_two.x(), 9.0); // 1 + 4*2
         assert_eq!(point_at_two.y(), 12.0); // 2 + 5*2
         assert_eq!(point_at_two.z(), 15.0); // 3 + 6*2

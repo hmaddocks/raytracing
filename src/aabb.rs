@@ -85,7 +85,7 @@ impl Hittable for Aabb {
         // If we've made it here, there is a hit
         Some(HitRecord {
             t: t_min,
-            position: ray.at(t_min),
+            position: ray.at_time(t_min),
             normal: Vec3::default(), // Arbitrary normal, not used for AABB
             front_face: true,        // Arbitrary, not used for AABB
             material: None,

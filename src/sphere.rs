@@ -82,7 +82,7 @@ impl Hittable for Sphere {
         }
 
         // Calculate hit position
-        let position = ray.at(root);
+        let position = ray.at_time(root);
 
         // Calculate outward normal at hit point (normalized vector from center to hit point)
         let outward_normal = (position - current_center) / self.radius;
@@ -179,7 +179,7 @@ impl Hittable for MovingSphere {
         }
 
         // Calculate hit position
-        let position = ray.at(root);
+        let position = ray.at_time(root);
 
         // Calculate outward normal at hit point (normalized vector from center to hit point)
         let outward_normal = (position - current_center) / self.radius;
