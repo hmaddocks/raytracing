@@ -29,9 +29,9 @@ impl Aabb {
     #[inline]
     pub fn surrounding(a: &Aabb, b: &Aabb) -> Self {
         Self {
-            x: Interval::new(a.x.min(), b.x.max()),
-            y: Interval::new(a.y.min(), b.y.max()),
-            z: Interval::new(a.z.min(), b.z.max()),
+            x: Interval::new(a.x.min().min(b.x.min()), a.x.max().max(b.x.max())),
+            y: Interval::new(a.y.min().min(b.y.min()), a.y.max().max(b.y.max())),
+            z: Interval::new(a.z.min().min(b.z.min()), a.z.max().max(b.z.max())),
         }
     }
 

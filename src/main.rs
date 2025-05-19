@@ -1,5 +1,6 @@
+use crate::bvh::Bvh;
 use crate::color::Color;
-use crate::hittable_list::HittableList;
+use crate::hittable::Hittable;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::point3::Point3;
 use crate::sphere::{MovingSphere, Sphere};
@@ -7,6 +8,7 @@ use crate::utilities::random_double;
 use crate::vec3::Vec3;
 
 mod aabb;
+mod bvh;
 mod camera;
 mod color;
 mod hittable;
@@ -21,11 +23,11 @@ mod vec3;
 
 fn main() {
     // World
-    let mut world = HittableList::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
     // Materials
     let material_ground = Lambertian::new(Color::new(0.5, 0.5, 0.5));
-    world.add(Box::new(Sphere::new(
+    objects.push(Box::new(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
         material_ground.clone(),
@@ -47,7 +49,7 @@ fn main() {
                         random_double(),
                     ));
                     let center2 = center + Vec3::new(0.0, random_double() * 0.5, 0.0);
-                    world.add(Box::new(MovingSphere::new(
+                    objects.push(Box::new(MovingSphere::new(
                         (center, center2),
                         (0.0, 1.0),
                         0.2,
@@ -58,35 +60,38 @@ fn main() {
                         Color::new(random_double(), random_double(), random_double()),
                         0.5,
                     );
-                    world.add(Box::new(Sphere::new(center, 0.2, material.clone())));
+                    objects.push(Box::new(Sphere::new(center, 0.2, material.clone())));
                 } else {
                     let material = Dielectric::new(1.5);
-                    world.add(Box::new(Sphere::new(center, 0.2, material.clone())));
+                    objects.push(Box::new(Sphere::new(center, 0.2, material.clone())));
                 }
             }
         }
     }
 
     let material_1 = Dielectric::new(1.5);
-    world.add(Box::new(Sphere::new(
+    objects.push(Box::new(Sphere::new(
         Point3::new(0.0, 1.0, 0.0),
         1.0,
         material_1.clone(),
     )));
 
     let material_2 = Lambertian::new(Color::new(0.4, 0.2, 0.1));
-    world.add(Box::new(Sphere::new(
+    objects.push(Box::new(Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
         material_2.clone(),
     )));
 
     let material_3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
-    world.add(Box::new(Sphere::new(
+    objects.push(Box::new(Sphere::new(
         Point3::new(4.0, 1.0, 0.0),
         1.0,
         material_3.clone(),
     )));
+
+    // Build BVH from objects
+    let world = Bvh::new(objects);
 
     // Camera
     let camera = camera::CameraBuilder::new()
@@ -102,5 +107,5 @@ fn main() {
         .focus_dist(10.0)
         .build();
 
-    camera.render(&world);
+    camera.render(&world as &dyn Hittable);
 }

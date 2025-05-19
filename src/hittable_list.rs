@@ -7,6 +7,45 @@ pub struct HittableList {
     objects: Vec<Box<dyn Hittable>>,
 }
 
+impl crate::hittable::Hittable for HittableList {
+    fn hit(
+        &self,
+        r: &crate::ray::Ray,
+        ray_t: crate::interval::Interval,
+    ) -> Option<crate::hittable::HitRecord> {
+        let mut hit_record = None;
+        let mut closest_so_far = ray_t.max();
+        for object in &self.objects {
+            if let Some(hit) = object.hit(
+                r,
+                crate::interval::Interval::new(ray_t.min(), closest_so_far),
+            ) {
+                closest_so_far = hit.t;
+                hit_record = Some(hit);
+            }
+        }
+        hit_record
+    }
+
+    fn bounding_box(&self, time0: f64, time1: f64) -> Option<crate::aabb::Aabb> {
+        if self.objects.is_empty() {
+            return None;
+        }
+        let mut bbox = None;
+        for object in &self.objects {
+            if let Some(obj_box) = object.bounding_box(time0, time1) {
+                bbox = Some(match bbox {
+                    None => obj_box,
+                    Some(existing) => crate::aabb::Aabb::surrounding(&existing, &obj_box),
+                });
+            } else {
+                return None;
+            }
+        }
+        bbox
+    }
+}
+
 impl HittableList {
     pub fn new() -> Self {
         HittableList {

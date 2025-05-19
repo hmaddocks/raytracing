@@ -1,5 +1,4 @@
 use crate::color::Color;
-use crate::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::point3::Point3;
 use crate::random_double;
@@ -229,7 +228,7 @@ impl Camera {
     /// * `ray` - The ray to trace
     /// * `depth` - The maximum recursion depth remaining
     /// * `world` - The scene to render
-    fn ray_color(ray: &Ray, depth: u32, world: &HittableList) -> Color {
+    fn ray_color(ray: &Ray, depth: u32, world: &dyn crate::hittable::Hittable) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered
         if depth == 0 {
             return BLACK;
@@ -255,8 +254,8 @@ impl Camera {
     ///
     /// # Arguments
     ///
-    /// * `world` - The scene to render
-    pub fn render(&self, world: &HittableList) {
+    /// * `world` - The scene to render (any object implementing Hittable)
+    pub fn render(&self, world: &dyn crate::hittable::Hittable) {
         // Create a progress bar for tracking scanlines
         let progress_bar = ProgressBar::new(self.image_height as u64);
         progress_bar.set_style(
@@ -375,7 +374,7 @@ mod tests {
     fn test_ray_color_depth_zero() {
         let ray = Ray::new(Point3::default(), Vec3::new(1.0, 0.0, 0.0), 0.0);
         let world = HittableList::new();
-        let color = Camera::ray_color(&ray, 0, &world);
+        let color = Camera::ray_color(&ray, 0, &world as &dyn crate::hittable::Hittable);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
 }
