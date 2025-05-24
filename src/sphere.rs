@@ -91,7 +91,6 @@ impl Hittable for Sphere {
         let mut hit_record = HitRecord {
             t: root,
             position,
-            normal: Vec3::default(),
             front_face: true,
             material: Some(self.material.clone()),
             ..Default::default()

@@ -14,12 +14,6 @@ impl SolidColor {
     pub fn new(color: Color) -> Self {
         Self { color }
     }
-
-    pub fn rgb(r: f64, g: f64, b: f64) -> Self {
-        Self {
-            color: Color::new(r, g, b),
-        }
-    }
 }
 
 impl Texture for SolidColor {
@@ -88,15 +82,6 @@ mod tests {
         assert_eq!(texture.value(0.0, 0.0, &point), color);
         assert_eq!(texture.value(0.5, 0.5, &point), color);
         assert_eq!(texture.value(1.0, 1.0, &point), color);
-    }
-
-    #[test]
-    fn test_solid_color_rgb_constructor() {
-        let texture = SolidColor::rgb(0.5, 0.3, 0.1);
-        let point = Point3::new(1.0, 2.0, 3.0);
-        let expected_color = Color::new(0.5, 0.3, 0.1);
-
-        assert_eq!(texture.value(0.0, 0.0, &point), expected_color);
     }
 
     #[test]

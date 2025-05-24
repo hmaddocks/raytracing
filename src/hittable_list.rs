@@ -1,3 +1,4 @@
+use crate::aabb::Aabb;
 use crate::hittable::HitRecord;
 use crate::hittable::Hittable;
 use crate::interval::Interval;
@@ -7,19 +8,12 @@ pub struct HittableList {
     objects: Vec<Box<dyn Hittable>>,
 }
 
-impl crate::hittable::Hittable for HittableList {
-    fn hit(
-        &self,
-        r: &crate::ray::Ray,
-        ray_t: crate::interval::Interval,
-    ) -> Option<crate::hittable::HitRecord> {
+impl Hittable for HittableList {
+    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
         let mut hit_record = None;
         let mut closest_so_far = ray_t.max();
         for object in &self.objects {
-            if let Some(hit) = object.hit(
-                r,
-                crate::interval::Interval::new(ray_t.min(), closest_so_far),
-            ) {
+            if let Some(hit) = object.hit(r, Interval::new(ray_t.min(), closest_so_far)) {
                 closest_so_far = hit.t;
                 hit_record = Some(hit);
             }
@@ -27,7 +21,7 @@ impl crate::hittable::Hittable for HittableList {
         hit_record
     }
 
-    fn bounding_box(&self, time0: f64, time1: f64) -> Option<crate::aabb::Aabb> {
+    fn bounding_box(&self, time0: f64, time1: f64) -> Option<Aabb> {
         if self.objects.is_empty() {
             return None;
         }
@@ -36,7 +30,7 @@ impl crate::hittable::Hittable for HittableList {
             if let Some(obj_box) = object.bounding_box(time0, time1) {
                 bbox = Some(match bbox {
                     None => obj_box,
-                    Some(existing) => crate::aabb::Aabb::surrounding(&existing, &obj_box),
+                    Some(existing) => Aabb::surrounding(&existing, &obj_box),
                 });
             } else {
                 return None;

@@ -1,7 +1,6 @@
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::ray::Ray;
-use crate::vec3::Vec3;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Aabb {

@@ -32,7 +32,7 @@ impl Bvh {
     fn build(objects: &mut [Box<dyn Hittable>]) -> BvhNode {
         let len = objects.len();
         let axis = rand::rng().random_range(0..3);
-        let comparator = |a: &Box<dyn Hittable>, b: &Box<dyn Hittable>| {
+        let comparator = |a: &dyn Hittable, b: &dyn Hittable| {
             let box_a = a
                 .bounding_box(0.0, 1.0)
                 .expect("No bounding box in BVH node.");
@@ -58,7 +58,7 @@ impl Bvh {
                     std::mem::replace(&mut objects[0], Box::new(DummyHittable)),
                     std::mem::replace(&mut objects[1], Box::new(DummyHittable)),
                 ];
-                objs.sort_by(comparator);
+                objs.sort_by(|a, b| comparator(&**a, &**b));
                 let left = Bvh::build(&mut [objs.remove(0)]);
                 let right = Bvh::build(&mut [objs.remove(0)]);
                 let bbox = Aabb::surrounding(
@@ -72,7 +72,7 @@ impl Bvh {
                 }
             }
             _ => {
-                objects.sort_by(comparator);
+                objects.sort_by(|a, b| comparator(&**a, &**b));
                 let mid = len / 2;
                 let (left_objs, right_objs) = objects.split_at_mut(mid);
                 let left = Bvh::build(left_objs);

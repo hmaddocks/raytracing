@@ -27,13 +27,13 @@ impl fmt::Debug for Material {
 
 impl PartialEq for Material {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Material::Lambertian(_), Material::Lambertian(_)) => true,
-            (Material::Metal(_), Material::Metal(_)) => true,
-            (Material::Dielectric(_), Material::Dielectric(_)) => true,
-            (Material::Test(_), Material::Test(_)) => true,
-            _ => false,
-        }
+        matches!(
+            (self, other),
+            (Material::Lambertian(_), Material::Lambertian(_))
+                | (Material::Metal(_), Material::Metal(_))
+                | (Material::Dielectric(_), Material::Dielectric(_))
+                | (Material::Test(_), Material::Test(_))
+        )
     }
 }
 
