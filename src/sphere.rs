@@ -94,6 +94,7 @@ impl Hittable for Sphere {
             normal: Vec3::default(),
             front_face: true,
             material: Some(self.material.clone()),
+            ..Default::default()
         };
 
         hit_record.set_face_normal(ray, &outward_normal);
@@ -191,6 +192,7 @@ impl Hittable for MovingSphere {
             normal: Vec3::default(),
             front_face: true,
             material: Some(self.material.clone()),
+            ..Default::default()
         };
 
         hit_record.set_face_normal(ray, &outward_normal);

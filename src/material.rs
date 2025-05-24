@@ -136,6 +136,7 @@ mod tests {
             t: 1.0,
             front_face: true,
             material,
+            ..Default::default()
         };
         hit_record
     }
