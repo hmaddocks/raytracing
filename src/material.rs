@@ -1,15 +1,51 @@
 use crate::color::Color;
 use crate::hittable::HitRecord;
+use crate::point3::Point3;
 use crate::ray::Ray;
+use crate::texture::{SolidColor, Texture};
 use crate::utilities::random_double;
 use crate::vec3::Vec3;
+use std::fmt;
 
-#[derive(Clone, Debug, PartialEq)]
 pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
     Dielectric(Dielectric),
     Test(TestMaterial),
+}
+
+impl fmt::Debug for Material {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Material::Lambertian(_) => write!(f, "Material::Lambertian"),
+            Material::Metal(_) => write!(f, "Material::Metal"),
+            Material::Dielectric(_) => write!(f, "Material::Dielectric"),
+            Material::Test(_) => write!(f, "Material::Test"),
+        }
+    }
+}
+
+impl PartialEq for Material {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Material::Lambertian(_), Material::Lambertian(_)) => true,
+            (Material::Metal(_), Material::Metal(_)) => true,
+            (Material::Dielectric(_), Material::Dielectric(_)) => true,
+            (Material::Test(_), Material::Test(_)) => true,
+            _ => false,
+        }
+    }
+}
+
+impl Clone for Material {
+    fn clone(&self) -> Self {
+        match self {
+            Material::Lambertian(l) => Material::Lambertian(l.clone()),
+            Material::Metal(m) => Material::Metal(m.clone()),
+            Material::Dielectric(d) => Material::Dielectric(d.clone()),
+            Material::Test(t) => Material::Test(t.clone()),
+        }
+    }
 }
 
 impl Material {
@@ -23,14 +59,25 @@ impl Material {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct Lambertian {
-    albedo: Color,
+    texture: Box<dyn Texture>,
+}
+
+impl Clone for Lambertian {
+    fn clone(&self) -> Self {
+        Self {
+            texture: Box::new(SolidColor::new(self.texture.value(
+                0.0,
+                0.0,
+                &Point3::new(0.0, 0.0, 0.0),
+            ))),
+        }
+    }
 }
 
 impl Lambertian {
-    pub fn new(albedo: Color) -> Material {
-        Material::Lambertian(Lambertian { albedo })
+    pub fn new(texture: Box<dyn Texture>) -> Material {
+        Material::Lambertian(Lambertian { texture })
     }
 
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
@@ -40,7 +87,10 @@ impl Lambertian {
         }
         let time = ray.time();
         let scatter = Ray::new(hit_record.position, scatter_direction, time);
-        (self.albedo, scatter)
+        let attenuation = self
+            .texture
+            .value(hit_record.u, hit_record.v, &hit_record.position);
+        (attenuation, scatter)
     }
 }
 
@@ -143,13 +193,16 @@ mod tests {
 
     #[test]
     fn test_lambertian_creation() {
-        let albedo = Color::new(0.5, 0.5, 0.5);
-        let material = Lambertian::new(albedo);
+        let texture = SolidColor::new(Color::new(0.5, 0.5, 0.5));
+        let material = Lambertian::new(Box::new(texture.clone()));
 
         match material {
             Material::Lambertian(l) => {
-                // Check that the albedo was stored correctly
-                assert_eq!(l.albedo, albedo);
+                // Check that the material was created successfully
+                assert!(
+                    l.texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0))
+                        == texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0))
+                );
             }
             _ => panic!("Expected Lambertian material"),
         }
@@ -157,8 +210,8 @@ mod tests {
 
     #[test]
     fn test_lambertian_scatter() {
-        let albedo = Color::new(0.5, 0.5, 0.5);
-        let material = Lambertian::new(albedo);
+        let texture = SolidColor::new(Color::new(0.5, 0.5, 0.5));
+        let material = Lambertian::new(Box::new(texture.clone()));
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
         let hit_point = Point3::new(0.0, 0.0, 1.0);
@@ -171,8 +224,11 @@ mod tests {
             _ => panic!("Expected Lambertian material"),
         };
 
-        // Check that the scattered color is the albedo
-        assert_eq!(scattered_color, albedo);
+        // Check that the scattered color is the texture color
+        assert_eq!(
+            scattered_color,
+            texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0))
+        );
 
         // Check that the scattered ray originates from the hit point
         assert_eq!(*scattered_ray.origin(), hit_point);
@@ -350,8 +406,8 @@ mod tests {
     fn test_material_enum_scatter() {
         // Test that the Material enum correctly delegates to the appropriate implementation
 
-        let albedo = Color::new(0.5, 0.5, 0.5);
-        let lambertian = Lambertian::new(albedo);
+        let texture = SolidColor::new(Color::new(0.5, 0.5, 0.5));
+        let lambertian = Lambertian::new(Box::new(texture.clone()));
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
         let hit_point = Point3::new(0.0, 0.0, 1.0);
@@ -363,6 +419,6 @@ mod tests {
         let (color, _) = lambertian.scatter(&ray, &hit_record);
 
         // Verify we got the right color back
-        assert_eq!(color, albedo);
+        assert_eq!(color, texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0)));
     }
 }

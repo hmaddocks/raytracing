@@ -154,10 +154,11 @@ mod tests {
     use crate::point3::Point3;
     use crate::ray::Ray;
     use crate::sphere::Sphere;
+    use crate::texture::SolidColor;
     use crate::vec3::Vec3;
 
     fn test_material() -> Material {
-        Lambertian::new(Color::new(0.8, 0.3, 0.3))
+        Lambertian::new(Box::new(SolidColor::new(Color::new(0.8, 0.3, 0.3))))
     }
 
     #[test]
