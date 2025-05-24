@@ -103,7 +103,7 @@ fn main() {
     )));
 
     // Build BVH from objects
-    let world = Bvh::new(objects);
+    let world = Bvh::new(objects).expect("Failed to create BVH");
 
     // Camera
     let camera = camera::CameraBuilder::new()

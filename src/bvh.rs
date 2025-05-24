@@ -2,9 +2,12 @@ use crate::aabb::Aabb;
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::ray::Ray;
-use rand::Rng;
 use std::cmp::Ordering;
+use std::error::Error;
+use std::fmt;
 
+/// A Bounding Volume Hierarchy (BVH) acceleration structure for ray tracing.
+/// This structure organizes objects in a binary tree to accelerate ray-object intersection tests.
 pub enum BvhNode {
     Branch {
         left: Box<BvhNode>,
@@ -17,75 +20,129 @@ pub enum BvhNode {
     },
 }
 
+/// A node in the BVH tree structure. Can be either a branch (containing two child nodes)
+/// or a leaf (containing a single hittable object).
 pub struct Bvh {
     tree: BvhNode,
     bbox: Aabb,
 }
 
+#[derive(Debug)]
+pub enum BvhError {
+    MissingBoundingBox,
+    EmptyObjectList,
+}
+
+impl fmt::Display for BvhError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BvhError::MissingBoundingBox => write!(f, "Object has no bounding box"),
+            BvhError::EmptyObjectList => write!(f, "Cannot create BVH from empty object list"),
+        }
+    }
+}
+
+impl Error for BvhError {}
+
 impl Bvh {
-    pub fn new(mut objects: Vec<Box<dyn Hittable>>) -> Self {
-        let tree = Bvh::build(&mut objects);
-        let bbox = tree.bounding_box().unwrap();
-        Self { tree, bbox }
+    /// Creates a new BVH from a list of hittable objects.
+    /// The objects are organized into a binary tree structure for efficient ray intersection tests.
+    pub fn new(mut objects: Vec<Box<dyn Hittable>>) -> Result<Self, BvhError> {
+        if objects.is_empty() {
+            return Err(BvhError::EmptyObjectList);
+        }
+        let tree = Bvh::build(&mut objects)?;
+        let bbox = tree.bounding_box().ok_or(BvhError::MissingBoundingBox)?;
+        Ok(Self { tree, bbox })
     }
 
-    fn build(objects: &mut [Box<dyn Hittable>]) -> BvhNode {
+    fn build(objects: &mut [Box<dyn Hittable>]) -> Result<BvhNode, BvhError> {
         let len = objects.len();
-        let axis = rand::rng().random_range(0..3);
-        let comparator = |a: &dyn Hittable, b: &dyn Hittable| {
+        if len == 0 {
+            return Err(BvhError::EmptyObjectList);
+        }
+
+        // Find the axis with the largest spread
+        let mut min_bounds = [f64::INFINITY; 3];
+        let mut max_bounds = [f64::NEG_INFINITY; 3];
+
+        for obj in objects.iter() {
+            let bbox = obj
+                .bounding_box(0.0, 1.0)
+                .ok_or(BvhError::MissingBoundingBox)?;
+            for axis in 0..3 {
+                let interval = bbox.axis_interval(axis);
+                min_bounds[axis] = min_bounds[axis].min(interval.min());
+                max_bounds[axis] = max_bounds[axis].max(interval.max());
+            }
+        }
+
+        let axis = (0..3)
+            .max_by(|&a, &b| {
+                let spread_a = max_bounds[a] - min_bounds[a];
+                let spread_b = max_bounds[b] - min_bounds[b];
+                spread_a.partial_cmp(&spread_b).unwrap_or(Ordering::Equal)
+            })
+            .unwrap_or(0);
+
+        let comparator = |a: &dyn Hittable, b: &dyn Hittable| -> Result<Ordering, BvhError> {
             let box_a = a
                 .bounding_box(0.0, 1.0)
-                .expect("No bounding box in BVH node.");
+                .ok_or(BvhError::MissingBoundingBox)?;
             let box_b = b
                 .bounding_box(0.0, 1.0)
-                .expect("No bounding box in BVH node.");
-            box_a
+                .ok_or(BvhError::MissingBoundingBox)?;
+            Ok(box_a
                 .axis_interval(axis)
                 .min()
                 .partial_cmp(&box_b.axis_interval(axis).min())
-                .unwrap_or(Ordering::Equal)
+                .unwrap_or(Ordering::Equal))
         };
+
         match len {
             1 => {
-                let bbox = objects[0].bounding_box(0.0, 1.0).unwrap();
-                BvhNode::Leaf {
+                let bbox = objects[0]
+                    .bounding_box(0.0, 1.0)
+                    .ok_or(BvhError::MissingBoundingBox)?;
+                Ok(BvhNode::Leaf {
                     object: std::mem::replace(&mut objects[0], Box::new(DummyHittable)),
                     bbox,
-                }
+                })
             }
             2 => {
                 let mut objs = vec![
                     std::mem::replace(&mut objects[0], Box::new(DummyHittable)),
                     std::mem::replace(&mut objects[1], Box::new(DummyHittable)),
                 ];
-                objs.sort_by(|a, b| comparator(&**a, &**b));
-                let left = Bvh::build(&mut [objs.remove(0)]);
-                let right = Bvh::build(&mut [objs.remove(0)]);
+                objs.sort_by(|a, b| comparator(a.as_ref(), b.as_ref()).unwrap_or(Ordering::Equal));
+                let left = Bvh::build(&mut [objs.remove(0)])?;
+                let right = Bvh::build(&mut [objs.remove(0)])?;
                 let bbox = Aabb::surrounding(
-                    &left.bounding_box().unwrap(),
-                    &right.bounding_box().unwrap(),
+                    &left.bounding_box().ok_or(BvhError::MissingBoundingBox)?,
+                    &right.bounding_box().ok_or(BvhError::MissingBoundingBox)?,
                 );
-                BvhNode::Branch {
+                Ok(BvhNode::Branch {
                     left: Box::new(left),
                     right: Box::new(right),
                     bbox,
-                }
+                })
             }
             _ => {
-                objects.sort_by(|a, b| comparator(&**a, &**b));
+                objects
+                    .sort_by(|a, b| comparator(a.as_ref(), b.as_ref()).unwrap_or(Ordering::Equal));
                 let mid = len / 2;
                 let (left_objs, right_objs) = objects.split_at_mut(mid);
-                let left = Bvh::build(left_objs);
-                let right = Bvh::build(right_objs);
+                let left = Bvh::build(left_objs)?;
+                let right = Bvh::build(right_objs)?;
                 let bbox = Aabb::surrounding(
-                    &left.bounding_box().unwrap(),
-                    &right.bounding_box().unwrap(),
+                    &left.bounding_box().ok_or(BvhError::MissingBoundingBox)?,
+                    &right.bounding_box().ok_or(BvhError::MissingBoundingBox)?,
                 );
-                BvhNode::Branch {
+                Ok(BvhNode::Branch {
                     left: Box::new(left),
                     right: Box::new(right),
                     bbox,
-                }
+                })
             }
         }
     }
@@ -176,7 +233,7 @@ mod tests {
             test_material(),
         ));
         let objects: Vec<Box<dyn Hittable>> = vec![s1, s2];
-        let bvh = Bvh::new(objects);
+        let bvh = Bvh::new(objects).unwrap();
         let bbox = bvh.bounding_box(0.0, 1.0).unwrap();
         // The bounding box should enclose both spheres (rough check)
         let min_x = bbox.axis_interval(0).min();
@@ -206,7 +263,7 @@ mod tests {
             test_material(),
         ));
         let objects: Vec<Box<dyn Hittable>> = vec![s1, s2];
-        let bvh = Bvh::new(objects);
+        let bvh = Bvh::new(objects).unwrap();
         // Ray that misses everything
         let ray = Ray::new(Point3::new(2.0, 2.0, 0.0), Vec3::new(0.0, 0.0, -1.0), 0.0);
         let interval = Interval::new(0.001, f64::INFINITY);
@@ -226,7 +283,7 @@ mod tests {
             test_material(),
         ));
         let objects: Vec<Box<dyn Hittable>> = vec![s1, s2];
-        let bvh = Bvh::new(objects);
+        let bvh = Bvh::new(objects).unwrap();
         // Ray that hits the small sphere
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0), 0.0);
         let interval = Interval::new(0.001, f64::INFINITY);
@@ -250,7 +307,7 @@ mod tests {
             test_material(),
         ));
         let objects: Vec<Box<dyn Hittable>> = vec![s1];
-        let bvh = Bvh::new(objects);
+        let bvh = Bvh::new(objects).unwrap();
         let bbox = bvh.bounding_box(0.0, 1.0).unwrap();
         let min_x = bbox.axis_interval(0).min();
         let max_x = bbox.axis_interval(0).max();
