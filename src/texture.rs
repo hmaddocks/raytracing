@@ -22,32 +22,15 @@ impl Texture for SolidColor {
     }
 }
 
+#[derive(Clone)]
 pub struct CheckerTexture {
     pub scale: f64,
-    pub odd: Box<dyn Texture>,
-    pub even: Box<dyn Texture>,
-}
-
-impl Clone for CheckerTexture {
-    fn clone(&self) -> Self {
-        Self {
-            scale: self.scale,
-            odd: Box::new(SolidColor::new(self.odd.value(
-                0.0,
-                0.0,
-                &Point3::new(0.0, 0.0, 0.0),
-            ))),
-            even: Box::new(SolidColor::new(self.even.value(
-                0.0,
-                0.0,
-                &Point3::new(0.0, 0.0, 0.0),
-            ))),
-        }
-    }
+    pub odd: Box<TextureEnum>,
+    pub even: Box<TextureEnum>,
 }
 
 impl CheckerTexture {
-    pub fn new(scale: f64, odd: Box<dyn Texture>, even: Box<dyn Texture>) -> Self {
+    pub fn new(scale: f64, odd: Box<TextureEnum>, even: Box<TextureEnum>) -> Self {
         Self { scale, odd, even }
     }
 }
@@ -64,6 +47,21 @@ impl Texture for CheckerTexture {
             self.even.value(u, v, p)
         } else {
             self.odd.value(u, v, p)
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum TextureEnum {
+    SolidColor(SolidColor),
+    CheckerTexture(CheckerTexture),
+}
+
+impl Texture for TextureEnum {
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+        match self {
+            TextureEnum::SolidColor(t) => t.value(u, v, p),
+            TextureEnum::CheckerTexture(t) => t.value(u, v, p),
         }
     }
 }
@@ -88,8 +86,8 @@ mod tests {
     fn test_checker_texture() {
         let odd_color = Color::new(1.0, 1.0, 1.0); // White
         let even_color = Color::new(0.0, 0.0, 0.0); // Black
-        let odd = Box::new(SolidColor::new(odd_color));
-        let even = Box::new(SolidColor::new(even_color));
+        let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
+        let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
 
         let texture = CheckerTexture::new(1.0, odd, even);
 
@@ -110,8 +108,8 @@ mod tests {
     fn test_checker_texture_scale() {
         let odd_color = Color::new(1.0, 1.0, 1.0);
         let even_color = Color::new(0.0, 0.0, 0.0);
-        let odd = Box::new(SolidColor::new(odd_color));
-        let even = Box::new(SolidColor::new(even_color));
+        let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
+        let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
 
         // Create a checker texture with scale 2.0
         let texture = CheckerTexture::new(2.0, odd, even);
@@ -127,8 +125,8 @@ mod tests {
     fn test_checker_texture_clone() {
         let odd_color = Color::new(1.0, 1.0, 1.0);
         let even_color = Color::new(0.0, 0.0, 0.0);
-        let odd = Box::new(SolidColor::new(odd_color));
-        let even = Box::new(SolidColor::new(even_color));
+        let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
+        let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
 
         let texture = CheckerTexture::new(1.0, odd, even);
         let cloned_texture = texture.clone();

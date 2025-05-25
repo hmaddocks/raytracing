@@ -1,8 +1,7 @@
 use crate::color::Color;
 use crate::hittable::HitRecord;
-use crate::point3::Point3;
 use crate::ray::Ray;
-use crate::texture::{SolidColor, Texture};
+use crate::texture::{Texture, TextureEnum};
 use crate::utilities::random_double;
 use crate::vec3::Vec3;
 use std::fmt;
@@ -60,23 +59,19 @@ impl Material {
 }
 
 pub struct Lambertian {
-    texture: Box<dyn Texture>,
+    texture: Box<TextureEnum>,
 }
 
 impl Clone for Lambertian {
     fn clone(&self) -> Self {
         Self {
-            texture: Box::new(SolidColor::new(self.texture.value(
-                0.0,
-                0.0,
-                &Point3::new(0.0, 0.0, 0.0),
-            ))),
+            texture: Box::new((*self.texture).clone()),
         }
     }
 }
 
 impl Lambertian {
-    pub fn new(texture: Box<dyn Texture>) -> Material {
+    pub fn new(texture: Box<TextureEnum>) -> Material {
         Material::Lambertian(Lambertian { texture })
     }
 
@@ -177,6 +172,7 @@ impl TestMaterial {
 mod tests {
     use super::*;
     use crate::point3::Point3;
+    use crate::texture::SolidColor;
 
     // Helper function to create a HitRecord for testing
     fn create_hit_record(position: Point3, normal: Vec3, material: Option<Material>) -> HitRecord {
@@ -193,7 +189,7 @@ mod tests {
 
     #[test]
     fn test_lambertian_creation() {
-        let texture = SolidColor::new(Color::new(0.5, 0.5, 0.5));
+        let texture = TextureEnum::SolidColor(SolidColor::new(Color::new(0.5, 0.5, 0.5)));
         let material = Lambertian::new(Box::new(texture.clone()));
 
         match material {
@@ -210,7 +206,7 @@ mod tests {
 
     #[test]
     fn test_lambertian_scatter() {
-        let texture = SolidColor::new(Color::new(0.5, 0.5, 0.5));
+        let texture = TextureEnum::SolidColor(SolidColor::new(Color::new(0.5, 0.5, 0.5)));
         let material = Lambertian::new(Box::new(texture.clone()));
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
@@ -406,7 +402,7 @@ mod tests {
     fn test_material_enum_scatter() {
         // Test that the Material enum correctly delegates to the appropriate implementation
 
-        let texture = SolidColor::new(Color::new(0.5, 0.5, 0.5));
+        let texture = TextureEnum::SolidColor(SolidColor::new(Color::new(0.5, 0.5, 0.5)));
         let lambertian = Lambertian::new(Box::new(texture.clone()));
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
