@@ -1,7 +1,7 @@
 ---
-description:
+description: Use this rule when using the TreadRng crate
 globs:
-alwaysApply: true
+alwaysApply: false
 ---
 When using `ThreadRng` module
 1. the `rand::thread_rng` method has been deprecated and renamed `rng`
