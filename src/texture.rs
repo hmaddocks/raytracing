@@ -1,18 +1,54 @@
 use crate::color::Color;
 use crate::point3::Point3;
 
+#[derive(Clone)]
+pub enum TextureEnum {
+    SolidColor(SolidColor),
+    CheckerTexture(CheckerTexture),
+}
+
+impl Texture for TextureEnum {
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+        match self {
+            TextureEnum::SolidColor(t) => t.value(u, v, p),
+            TextureEnum::CheckerTexture(t) => t.value(u, v, p),
+        }
+    }
+}
+
+/// A trait representing a texture that can be applied to surfaces.
+/// Textures are used to determine the color of a point on a surface
+/// based on its UV coordinates and position.
 pub trait Texture: Send + Sync {
+    /// Returns the color at the given UV coordinates and point in 3D space.
+    ///
+    /// # Arguments
+    /// * `u` - The U coordinate in texture space
+    /// * `v` - The V coordinate in texture space
+    /// * `p` - The point in 3D space
     fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color;
 }
 
+/// A texture that returns a constant color regardless of position or UV coordinates.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SolidColor {
+    /// The constant color to return
     pub color: Color,
 }
 
 impl SolidColor {
+    /// Creates a new solid color texture with the given color.
+    ///
+    /// # Arguments
+    /// * `color` - The constant color to use for this texture
     pub fn new(color: Color) -> Self {
         Self { color }
+    }
+}
+
+impl From<Color> for SolidColor {
+    fn from(color: Color) -> Self {
+        Self::new(color)
     }
 }
 
@@ -30,7 +66,17 @@ pub struct CheckerTexture {
 }
 
 impl CheckerTexture {
+    /// Creates a new checker texture with the given scale and odd/even textures.
+    ///
+    /// # Arguments
+    /// * `scale` - The scale of the checker pattern. Must be positive.
+    /// * `odd` - The texture to use for odd squares
+    /// * `even` - The texture to use for even squares
+    ///
+    /// # Panics
+    /// Panics if `scale` is not positive.
     pub fn new(scale: f64, odd: Box<TextureEnum>, even: Box<TextureEnum>) -> Self {
+        assert!(scale > 0.0, "Scale must be positive");
         Self { scale, odd, even }
     }
 }
@@ -47,21 +93,6 @@ impl Texture for CheckerTexture {
             self.even.value(u, v, p)
         } else {
             self.odd.value(u, v, p)
-        }
-    }
-}
-
-#[derive(Clone)]
-pub enum TextureEnum {
-    SolidColor(SolidColor),
-    CheckerTexture(CheckerTexture),
-}
-
-impl Texture for TextureEnum {
-    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
-        match self {
-            TextureEnum::SolidColor(t) => t.value(u, v, p),
-            TextureEnum::CheckerTexture(t) => t.value(u, v, p),
         }
     }
 }

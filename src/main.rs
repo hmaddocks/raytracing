@@ -31,12 +31,8 @@ fn main() {
     let material_ground =
         Lambertian::new(Box::new(TextureEnum::CheckerTexture(CheckerTexture::new(
             3.0,
-            Box::new(TextureEnum::SolidColor(SolidColor::new(Color::new(
-                1.0, 1.0, 1.0,
-            )))),
-            Box::new(TextureEnum::SolidColor(SolidColor::new(Color::new(
-                0.0, 0.0, 0.0,
-            )))),
+            Box::new(TextureEnum::SolidColor(Color::new(1.0, 1.0, 1.0).into())),
+            Box::new(TextureEnum::SolidColor(Color::new(0.0, 0.0, 0.0).into())),
         ))));
     objects.push(Box::new(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
@@ -54,10 +50,9 @@ fn main() {
             );
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
-                    let material =
-                        Lambertian::new(Box::new(TextureEnum::SolidColor(SolidColor::new(
-                            Color::new(random_double(), random_double(), random_double()),
-                        ))));
+                    let material = Lambertian::new(Box::new(TextureEnum::SolidColor(
+                        Color::new(random_double(), random_double(), random_double()).into(),
+                    )));
                     let center2 = center + Vec3::new(0.0, random_double() * 0.5, 0.0);
                     objects.push(Box::new(MovingSphere::new(
                         (center, center2),
@@ -86,9 +81,9 @@ fn main() {
         material_1.clone(),
     )));
 
-    let material_2 = Lambertian::new(Box::new(TextureEnum::SolidColor(SolidColor::new(
-        Color::new(0.4, 0.2, 0.1),
-    ))));
+    let material_2 = Lambertian::new(Box::new(TextureEnum::SolidColor(
+        Color::new(0.4, 0.2, 0.1).into(),
+    )));
     objects.push(Box::new(Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
