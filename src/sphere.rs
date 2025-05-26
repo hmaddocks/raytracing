@@ -43,6 +43,57 @@ impl Sphere {
     }
 }
 
+/// A builder for creating `Sphere` instances with a fluent interface.
+#[derive(Debug, Default)]
+pub struct SphereBuilder {
+    center: Point3,
+    radius: f64,
+    material: Option<Material>,
+}
+
+impl SphereBuilder {
+    /// Creates a new empty `SphereBuilder`.
+    #[inline]
+    pub fn new() -> Self {
+        Self {
+            center: Point3::default(),
+            radius: 1.0,
+            material: None,
+        }
+    }
+
+    /// Sets the center point of the sphere.
+    #[inline]
+    pub fn center(mut self, center: Point3) -> Self {
+        self.center = center;
+        self
+    }
+
+    /// Sets the radius of the sphere.
+    #[inline]
+    pub fn radius(mut self, radius: f64) -> Self {
+        self.radius = radius;
+        self
+    }
+
+    /// Sets the material of the sphere.
+    #[inline]
+    pub fn material(mut self, material: Material) -> Self {
+        self.material = Some(material);
+        self
+    }
+
+    /// Builds a new `Sphere` instance.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Some(Sphere)` if all required fields are set, `None` otherwise.
+    #[inline]
+    pub fn build(self) -> Option<Sphere> {
+        Some(Sphere::new(self.center, self.radius, self.material?))
+    }
+}
+
 impl Hittable for Sphere {
     #[inline]
     fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {

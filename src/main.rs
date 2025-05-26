@@ -3,8 +3,8 @@ use crate::color::Color;
 use crate::hittable::Hittable;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::point3::Point3;
-use crate::sphere::{MovingSphere, Sphere};
-use crate::texture::{CheckerTexture, SolidColor, TextureEnum};
+use crate::sphere::{MovingSphere, SphereBuilder};
+use crate::texture::{CheckerTexture, TextureEnum};
 use crate::utilities::random_double;
 use crate::vec3::Vec3;
 
@@ -27,18 +27,20 @@ fn main() {
     // World
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    // Materials
-    let material_ground =
-        Lambertian::new(Box::new(TextureEnum::CheckerTexture(CheckerTexture::new(
-            3.0,
-            Box::new(TextureEnum::SolidColor(Color::new(1.0, 1.0, 1.0).into())),
-            Box::new(TextureEnum::SolidColor(Color::new(0.0, 0.0, 0.0).into())),
-        ))));
-    objects.push(Box::new(Sphere::new(
-        Point3::new(0.0, -1000.0, 0.0),
-        1000.0,
-        material_ground.clone(),
-    )));
+    objects.push(Box::new(
+        SphereBuilder::new()
+            .center(Point3::new(0.0, -1000.0, 0.0))
+            .radius(1000.0)
+            .material(Lambertian::new(Box::new(TextureEnum::CheckerTexture(
+                CheckerTexture::new(
+                    3.0,
+                    Box::new(TextureEnum::SolidColor(Color::new(1.0, 1.0, 1.0).into())),
+                    Box::new(TextureEnum::SolidColor(Color::new(0.0, 0.0, 0.0).into())),
+                ),
+            ))))
+            .build()
+            .expect("Failed to build ground sphere"),
+    ));
 
     for i in -8..8 {
         for j in -8..8 {
@@ -50,52 +52,69 @@ fn main() {
             );
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
-                    let material = Lambertian::new(Box::new(TextureEnum::SolidColor(
-                        Color::new(random_double(), random_double(), random_double()).into(),
-                    )));
                     let center2 = center + Vec3::new(0.0, random_double() * 0.5, 0.0);
                     objects.push(Box::new(MovingSphere::new(
                         (center, center2),
                         (0.0, 1.0),
                         0.2,
-                        material.clone(),
+                        Lambertian::new(Box::new(TextureEnum::SolidColor(
+                            Color::new(random_double(), random_double(), random_double()).into(),
+                        ))),
                     )));
                 } else if choose_mat < 0.95 {
-                    let material = Metal::new(
-                        Color::new(random_double(), random_double(), random_double()),
-                        0.5,
-                    );
-                    objects.push(Box::new(Sphere::new(center, 0.2, material.clone())));
+                    objects.push(Box::new(
+                        SphereBuilder::new()
+                            .center(center)
+                            .radius(0.2)
+                            .material(Metal::new(
+                                Color::new(random_double(), random_double(), random_double()),
+                                0.5,
+                            ))
+                            .build()
+                            .expect("Failed to build metal sphere"),
+                    ));
                 } else {
-                    let material = Dielectric::new(1.5);
-                    objects.push(Box::new(Sphere::new(center, 0.2, material.clone())));
+                    objects.push(Box::new(
+                        SphereBuilder::new()
+                            .center(center)
+                            .radius(0.2)
+                            .material(Dielectric::new(1.5))
+                            .build()
+                            .expect("Failed to build dielectric sphere"),
+                    ));
                 }
             }
         }
     }
 
-    let material_1 = Dielectric::new(1.5);
-    objects.push(Box::new(Sphere::new(
-        Point3::new(0.0, 1.0, 0.0),
-        1.0,
-        material_1.clone(),
-    )));
+    objects.push(Box::new(
+        SphereBuilder::new()
+            .center(Point3::new(0.0, 1.0, 0.0))
+            .radius(1.0)
+            .material(Dielectric::new(1.5))
+            .build()
+            .expect("Failed to build large dielectric sphere"),
+    ));
 
-    let material_2 = Lambertian::new(Box::new(TextureEnum::SolidColor(
-        Color::new(0.4, 0.2, 0.1).into(),
-    )));
-    objects.push(Box::new(Sphere::new(
-        Point3::new(-4.0, 1.0, 0.0),
-        1.0,
-        material_2.clone(),
-    )));
+    objects.push(Box::new(
+        SphereBuilder::new()
+            .center(Point3::new(-4.0, 1.0, 0.0))
+            .radius(1.0)
+            .material(Lambertian::new(Box::new(TextureEnum::SolidColor(
+                Color::new(0.4, 0.2, 0.1).into(),
+            ))))
+            .build()
+            .expect("Failed to build brown lambertian sphere"),
+    ));
 
-    let material_3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
-    objects.push(Box::new(Sphere::new(
-        Point3::new(4.0, 1.0, 0.0),
-        1.0,
-        material_3.clone(),
-    )));
+    objects.push(Box::new(
+        SphereBuilder::new()
+            .center(Point3::new(4.0, 1.0, 0.0))
+            .radius(1.0)
+            .material(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0))
+            .build()
+            .expect("Failed to build metal sphere"),
+    ));
 
     // Build BVH from objects
     let world = Bvh::new(objects).expect("Failed to create BVH");
