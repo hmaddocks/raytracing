@@ -6,48 +6,24 @@ use crate::utilities::random_double;
 use crate::vec3::Vec3;
 use std::fmt;
 
+/// Represents different types of materials that can be applied to surfaces.
+/// Each material type has its own scattering behavior and properties.
+#[derive(Clone, Debug, PartialEq)]
 pub enum Material {
+    /// A diffuse material that scatters light in all directions
     Lambertian(Lambertian),
+    /// A reflective material with optional fuzziness
     Metal(Metal),
+    /// A transparent material with refraction
     Dielectric(Dielectric),
+    /// A simple material for testing purposes
     Test(TestMaterial),
 }
 
-impl fmt::Debug for Material {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Material::Lambertian(_) => write!(f, "Material::Lambertian"),
-            Material::Metal(_) => write!(f, "Material::Metal"),
-            Material::Dielectric(_) => write!(f, "Material::Dielectric"),
-            Material::Test(_) => write!(f, "Material::Test"),
-        }
-    }
-}
-
-impl PartialEq for Material {
-    fn eq(&self, other: &Self) -> bool {
-        matches!(
-            (self, other),
-            (Material::Lambertian(_), Material::Lambertian(_))
-                | (Material::Metal(_), Material::Metal(_))
-                | (Material::Dielectric(_), Material::Dielectric(_))
-                | (Material::Test(_), Material::Test(_))
-        )
-    }
-}
-
-impl Clone for Material {
-    fn clone(&self) -> Self {
-        match self {
-            Material::Lambertian(l) => Material::Lambertian(l.clone()),
-            Material::Metal(m) => Material::Metal(m.clone()),
-            Material::Dielectric(d) => Material::Dielectric(d.clone()),
-            Material::Test(t) => Material::Test(t.clone()),
-        }
-    }
-}
-
 impl Material {
+    /// Calculates how a ray is scattered when it hits a surface with this material.
+    /// Returns the attenuation color and the scattered ray.
+    #[inline]
     pub fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
         match self {
             Material::Lambertian(l) => l.scatter(ray, hit_record),
@@ -58,23 +34,36 @@ impl Material {
     }
 }
 
+/// A diffuse material that scatters light in all directions.
+/// The color of the material is determined by its texture.
+#[derive(Clone)]
 pub struct Lambertian {
     texture: Box<TextureEnum>,
 }
 
-impl Clone for Lambertian {
-    fn clone(&self) -> Self {
-        Self {
-            texture: Box::new((*self.texture).clone()),
-        }
+impl fmt::Debug for Lambertian {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Lambertian {{ texture: Box<TextureEnum> }}")
+    }
+}
+
+impl PartialEq for Lambertian {
+    fn eq(&self, _other: &Self) -> bool {
+        // Since TextureEnum doesn't implement PartialEq, we can't compare textures
+        // We'll just return false to be safe
+        false
     }
 }
 
 impl Lambertian {
+    /// Creates a new Lambertian material with the given texture.
     pub fn new(texture: Box<TextureEnum>) -> Material {
         Material::Lambertian(Lambertian { texture })
     }
 
+    /// Calculates how a ray is scattered when it hits a Lambertian surface.
+    /// The scattered ray is randomly distributed in the hemisphere around the normal.
+    #[inline]
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
         let mut scatter_direction = hit_record.normal + Vec3::random_unit();
         if scatter_direction.near_zero() {
@@ -89,18 +78,27 @@ impl Lambertian {
     }
 }
 
+/// A reflective material that can have a fuzzy reflection.
+/// The fuzz parameter controls how much the reflection is blurred.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Metal {
+    /// The base color of the metal
     albedo: Color,
+    /// How fuzzy the reflection is (0.0 = perfect reflection, 1.0 = maximum fuzz)
     fuzz: f64,
 }
 
 impl Metal {
+    /// Creates a new metal material with the given color and fuzziness.
+    /// The fuzz parameter is clamped between 0.0 and 1.0.
     pub fn new(albedo: Color, fuzz: f64) -> Material {
         let fuzz = fuzz.clamp(0.0, 1.0);
         Material::Metal(Metal { albedo, fuzz })
     }
 
+    /// Calculates how a ray is scattered when it hits a metal surface.
+    /// The scattered ray is reflected with optional fuzziness.
+    #[inline]
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
         let mut reflected = ray.direction().reflect(&hit_record.normal);
         reflected = reflected.unit() + (Vec3::random_unit() * self.fuzz);
@@ -110,16 +108,23 @@ impl Metal {
     }
 }
 
+/// A transparent material that can refract light.
+/// The refraction index determines how much the light is bent when passing through.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Dielectric {
+    /// The index of refraction of the material
     refraction_index: f64,
 }
 
 impl Dielectric {
+    /// Creates a new dielectric material with the given refraction index.
     pub fn new(refraction_index: f64) -> Material {
         Material::Dielectric(Dielectric { refraction_index })
     }
 
+    /// Calculates how a ray is scattered when it hits a dielectric surface.
+    /// The ray can either be reflected or refracted based on the material properties.
+    #[inline]
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
         let attenuation = Color::new(1.0, 1.0, 1.0);
         let ri = if hit_record.front_face {
@@ -143,6 +148,8 @@ impl Dielectric {
         (attenuation, Ray::new(hit_record.position, direction, time))
     }
 
+    /// Calculates the reflectance coefficient using Schlick's approximation.
+    #[inline]
     fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
         let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
         r0 = r0 * r0;
@@ -150,17 +157,20 @@ impl Dielectric {
     }
 }
 
-// A simple material for testing purposes
+/// A simple material for testing purposes.
+/// Always scatters rays in the normal direction with white color.
 #[derive(Clone, Debug, PartialEq)]
 pub struct TestMaterial;
 
 impl TestMaterial {
+    /// Creates a new test material.
     pub fn new() -> Material {
         Material::Test(TestMaterial)
     }
 
+    /// Always returns a white color and scatters the ray in the normal direction.
+    #[inline]
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (Color, Ray) {
-        // Simple implementation that just returns white and a ray in the normal direction
         let scatter_direction = hit_record.normal;
         let time = ray.time();
         let scatter = Ray::new(hit_record.position, scatter_direction, time);
