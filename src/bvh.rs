@@ -210,7 +210,7 @@ mod tests {
     use crate::material::{Lambertian, Material};
     use crate::point3::Point3;
     use crate::ray::Ray;
-    use crate::sphere::Sphere;
+    use crate::sphere::SphereBuilder;
     use crate::texture::{SolidColor, TextureEnum};
     use crate::vec3::Vec3;
 
@@ -222,17 +222,19 @@ mod tests {
 
     #[test]
     fn test_bvh_construction_and_bbox() {
-        let s1: Box<dyn Hittable> = Box::new(Sphere::new(
-            Point3::new(0.0, 0.0, -1.0),
-            0.5,
-            test_material(),
-        ));
-        let s2: Box<dyn Hittable> = Box::new(Sphere::new(
-            Point3::new(0.0, -100.5, -1.0),
-            100.0,
-            test_material(),
-        ));
-        let objects: Vec<Box<dyn Hittable>> = vec![s1, s2];
+        let s1 = SphereBuilder::new()
+            .center(Point3::new(0.0, 0.0, -1.0))
+            .radius(0.5)
+            .material(test_material())
+            .build()
+            .unwrap();
+        let s2 = SphereBuilder::new()
+            .center(Point3::new(0.0, -100.5, -1.0))
+            .radius(100.0)
+            .material(test_material())
+            .build()
+            .unwrap();
+        let objects: Vec<Box<dyn Hittable>> = vec![Box::new(s1), Box::new(s2)];
         let bvh = Bvh::new(objects).unwrap();
         let bbox = bvh.bounding_box(0.0, 1.0).unwrap();
         // The bounding box should enclose both spheres (rough check)
@@ -252,17 +254,29 @@ mod tests {
 
     #[test]
     fn test_bvh_hit_miss() {
-        let s1: Box<dyn Hittable> = Box::new(Sphere::new(
-            Point3::new(0.0, 0.0, -1.0),
-            0.5,
-            test_material(),
-        ));
-        let s2: Box<dyn Hittable> = Box::new(Sphere::new(
-            Point3::new(0.0, -100.5, -1.0),
-            100.0,
-            test_material(),
-        ));
-        let objects: Vec<Box<dyn Hittable>> = vec![s1, s2];
+        // let s1: Box<dyn Hittable> = Box::new(Sphere::new(
+        //     Point3::new(0.0, 0.0, -1.0),
+        //     0.5,
+        //     test_material(),
+        // ));
+        // let s2: Box<dyn Hittable> = Box::new(Sphere::new(
+        //     Point3::new(0.0, -100.5, -1.0),
+        //     100.0,
+        //     test_material(),
+        // ));
+        let s1 = SphereBuilder::new()
+            .center(Point3::new(0.0, 0.0, -1.0))
+            .radius(0.5)
+            .material(test_material())
+            .build()
+            .unwrap();
+        let s2 = SphereBuilder::new()
+            .center(Point3::new(0.0, -100.5, -1.0))
+            .radius(100.0)
+            .material(test_material())
+            .build()
+            .unwrap();
+        let objects: Vec<Box<dyn Hittable>> = vec![Box::new(s1), Box::new(s2)];
         let bvh = Bvh::new(objects).unwrap();
         // Ray that misses everything
         let ray = Ray::new(Point3::new(2.0, 2.0, 0.0), Vec3::new(0.0, 0.0, -1.0), 0.0);
@@ -272,17 +286,19 @@ mod tests {
 
     #[test]
     fn test_bvh_hit_detect() {
-        let s1: Box<dyn Hittable> = Box::new(Sphere::new(
-            Point3::new(0.0, 0.0, -1.0),
-            0.5,
-            test_material(),
-        ));
-        let s2: Box<dyn Hittable> = Box::new(Sphere::new(
-            Point3::new(0.0, -100.5, -1.0),
-            100.0,
-            test_material(),
-        ));
-        let objects: Vec<Box<dyn Hittable>> = vec![s1, s2];
+        let s1 = SphereBuilder::new()
+            .center(Point3::new(0.0, 0.0, -1.0))
+            .radius(0.5)
+            .material(test_material())
+            .build()
+            .unwrap();
+        let s2 = SphereBuilder::new()
+            .center(Point3::new(0.0, -100.5, -1.0))
+            .radius(100.0)
+            .material(test_material())
+            .build()
+            .unwrap();
+        let objects: Vec<Box<dyn Hittable>> = vec![Box::new(s1), Box::new(s2)];
         let bvh = Bvh::new(objects).unwrap();
         // Ray that hits the small sphere
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0), 0.0);
@@ -301,12 +317,13 @@ mod tests {
         // let bvh = Bvh::new(objects); // Would panic on unwrap
 
         // Single object BVH
-        let s1: Box<dyn Hittable> = Box::new(Sphere::new(
-            Point3::new(1.0, 2.0, 3.0),
-            1.0,
-            test_material(),
-        ));
-        let objects: Vec<Box<dyn Hittable>> = vec![s1];
+        let s1 = SphereBuilder::new()
+            .center(Point3::new(1.0, 2.0, 3.0))
+            .radius(1.0)
+            .material(test_material())
+            .build()
+            .unwrap();
+        let objects: Vec<Box<dyn Hittable>> = vec![Box::new(s1)];
         let bvh = Bvh::new(objects).unwrap();
         let bbox = bvh.bounding_box(0.0, 1.0).unwrap();
         let min_x = bbox.axis_interval(0).min();

@@ -313,9 +313,11 @@ impl Camera {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hittable_list::HittableList;
+    use crate::bvh::Bvh;
+    use crate::material::TestMaterial;
     use crate::point3::Point3;
     use crate::ray::Ray;
+    use crate::sphere::SphereBuilder;
     use crate::utilities::random_double;
     use crate::vec3::Vec3;
 
@@ -373,7 +375,14 @@ mod tests {
     #[test]
     fn test_ray_color_depth_zero() {
         let ray = Ray::new(Point3::default(), Vec3::new(1.0, 0.0, 0.0), 0.0);
-        let world = HittableList::new();
+        // Create a sphere that the ray will miss
+        let sphere = SphereBuilder::new()
+            .center(Point3::new(0.0, 0.0, -1.0))
+            .radius(0.5)
+            .material(TestMaterial::new())
+            .build()
+            .unwrap();
+        let world = Bvh::new(vec![Box::new(sphere)]).unwrap();
         let color = Camera::ray_color(&ray, 0, &world as &dyn crate::hittable::Hittable);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }

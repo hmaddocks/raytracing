@@ -3,7 +3,7 @@ use crate::color::Color;
 use crate::hittable::Hittable;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::point3::Point3;
-use crate::sphere::{MovingSphere, SphereBuilder};
+use crate::sphere::{SphereBuilder, SphereType};
 use crate::texture::{CheckerTexture, TextureEnum};
 use crate::utilities::random_double;
 use crate::vec3::Vec3;
@@ -13,7 +13,6 @@ mod bvh;
 mod camera;
 mod color;
 mod hittable;
-mod hittable_list;
 mod interval;
 mod material;
 mod point3;
@@ -53,14 +52,20 @@ fn main() {
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     let center2 = center + Vec3::new(0.0, random_double() * 0.5, 0.0);
-                    objects.push(Box::new(MovingSphere::new(
-                        (center, center2),
-                        (0.0, 1.0),
-                        0.2,
-                        Lambertian::new(Box::new(TextureEnum::SolidColor(
+                    if let Some(SphereType::Moving(moving_sphere)) = SphereBuilder::new()
+                        .center(center)
+                        .center_end(center2)
+                        .radius(0.2)
+                        .material(Lambertian::new(Box::new(TextureEnum::SolidColor(
                             Color::new(random_double(), random_double(), random_double()).into(),
-                        ))),
-                    )));
+                        ))))
+                        .time_range(0.0, 1.0)
+                        .build()
+                    {
+                        objects.push(Box::new(moving_sphere));
+                    } else {
+                        panic!("Failed to build moving sphere");
+                    }
                 } else if choose_mat < 0.95 {
                     objects.push(Box::new(
                         SphereBuilder::new()

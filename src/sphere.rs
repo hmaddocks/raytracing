@@ -49,6 +49,10 @@ pub struct SphereBuilder {
     center: Point3,
     radius: f64,
     material: Option<Material>,
+    // New fields for moving sphere
+    center_end: Option<Point3>,
+    time_start: Option<f64>,
+    time_end: Option<f64>,
 }
 
 impl SphereBuilder {
@@ -59,6 +63,9 @@ impl SphereBuilder {
             center: Point3::default(),
             radius: 1.0,
             material: None,
+            center_end: None,
+            time_start: None,
+            time_end: None,
         }
     }
 
@@ -83,18 +90,79 @@ impl SphereBuilder {
         self
     }
 
-    /// Builds a new `Sphere` instance.
+    /// Sets the end center point for a moving sphere.
+    #[inline]
+    pub fn center_end(mut self, center: Point3) -> Self {
+        self.center_end = Some(center);
+        self
+    }
+
+    /// Sets the time range for a moving sphere.
+    #[inline]
+    pub fn time_range(mut self, start: f64, end: f64) -> Self {
+        self.time_start = Some(start);
+        self.time_end = Some(end);
+        self
+    }
+
+    /// Builds a new sphere instance.
     ///
     /// # Returns
     ///
-    /// Returns `Some(Sphere)` if all required fields are set, `None` otherwise.
+    /// Returns `Some(SphereType)` if all required fields are set, `None` otherwise.
+    /// The returned object will be either a `Sphere` or `MovingSphere` depending on whether
+    /// moving properties were set.
     #[inline]
-    pub fn build(self) -> Option<Sphere> {
-        Some(Sphere::new(self.center, self.radius, self.material?))
+    pub fn build(self) -> Option<SphereType> {
+        let material = self.material?;
+
+        // If we have all the moving sphere properties, create a MovingSphere
+        if let (Some(center_end), Some(time_start), Some(time_end)) =
+            (self.center_end, self.time_start, self.time_end)
+        {
+            Some(SphereType::Moving(MovingSphere::new(
+                (self.center, center_end),
+                (time_start, time_end),
+                self.radius,
+                material,
+            )))
+        } else {
+            // Otherwise create a regular Sphere
+            Some(SphereType::Static(Sphere::new(
+                self.center,
+                self.radius,
+                material,
+            )))
+        }
     }
 }
 
-impl Hittable for Sphere {
+/// An enum that can hold either a regular Sphere or a MovingSphere
+#[derive(Debug)]
+pub enum SphereType {
+    Static(Sphere),
+    Moving(MovingSphere),
+}
+
+impl Hittable for SphereType {
+    #[inline]
+    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
+        match self {
+            SphereType::Static(sphere) => sphere.hit(ray, ray_t),
+            SphereType::Moving(sphere) => sphere.hit(ray, ray_t),
+        }
+    }
+
+    #[inline]
+    fn bounding_box(&self, time0: f64, time1: f64) -> Option<Aabb> {
+        match self {
+            SphereType::Static(sphere) => sphere.bounding_box(time0, time1),
+            SphereType::Moving(sphere) => sphere.bounding_box(time0, time1),
+        }
+    }
+}
+
+impl Sphere {
     #[inline]
     fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
         // Get the current center based on time (for moving spheres)
@@ -162,6 +230,7 @@ impl Hittable for Sphere {
     }
 }
 
+#[derive(Debug)]
 pub struct MovingSphere {
     center: (Point3, Point3),
     time: (f64, f64),
