@@ -259,6 +259,22 @@ impl MovingSphere {
         self.center.0
             + (self.center.1 - self.center.0) * (time - self.time.0) / (self.time.1 - self.time.0)
     }
+
+    fn get_sphere_uv(point: Point3) -> (f64, f64) {
+        // p: a given point on the sphere of radius one, centered at the origin.
+        // u: returned value [0,1] of angle around the Y axis from X=-1.
+        // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+        //     <1 0 0> yields <0.50 0.50>       <-1  0  0> yields <0.00 0.50>
+        //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
+        //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
+
+        let theta = (-point.y()).acos();
+        let phi = (-point.z()).atan2(point.x()) + std::f64::consts::PI;
+
+        let u = phi / (2.0 * std::f64::consts::PI);
+        let v = theta / std::f64::consts::PI;
+        (u, v)
+    }
 }
 
 impl Hittable for MovingSphere {
@@ -304,6 +320,7 @@ impl Hittable for MovingSphere {
         // Calculate outward normal at hit point (normalized vector from center to hit point)
         let outward_normal = (position - current_center) / self.radius;
 
+        let (u, v) = Self::get_sphere_uv(position);
         // Create hit record and set the normal based on ray direction
         let mut hit_record = HitRecord {
             t: root,
@@ -311,6 +328,8 @@ impl Hittable for MovingSphere {
             normal: Vec3::default(),
             front_face: true,
             material: Some(self.material.clone()),
+            u,
+            v,
             ..Default::default()
         };
 
