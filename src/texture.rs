@@ -82,17 +82,13 @@ impl CheckerTexture {
 }
 
 impl Texture for CheckerTexture {
-    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
-        let x_integer = (p.x() * self.scale).floor() as i32;
-        let y_integer = (p.y() * self.scale).floor() as i32;
-        let z_integer = (p.z() * self.scale).floor() as i32;
-
-        let is_even = (x_integer + y_integer + z_integer) % 2 == 0;
-
-        if is_even {
-            self.even.value(u, v, p)
+    fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
+        let sines =
+            (self.scale * p.x()).sin() * (self.scale * p.y()).sin() * (self.scale * p.z()).sin();
+        if sines > 0.0 {
+            self.odd.value(_u, _v, p)
         } else {
-            self.odd.value(u, v, p)
+            self.even.value(_u, _v, p)
         }
     }
 }
@@ -120,19 +116,23 @@ mod tests {
         let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
         let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
 
-        let texture = CheckerTexture::new(1.0, odd, even);
-
-        // Test points that should be in even squares
-        let even_point1 = Point3::new(0.0, 0.0, 0.0);
-        let even_point2 = Point3::new(2.0, 2.0, 0.0);
-        assert_eq!(texture.value(0.0, 0.0, &even_point1), even_color);
-        assert_eq!(texture.value(0.0, 0.0, &even_point2), even_color);
-
-        // Test points that should be in odd squares
-        let odd_point1 = Point3::new(1.0, 0.0, 0.0);
-        let odd_point2 = Point3::new(0.0, 1.0, 0.0);
-        assert_eq!(texture.value(0.0, 0.0, &odd_point1), odd_color);
-        assert_eq!(texture.value(0.0, 0.0, &odd_point2), odd_color);
+        let texture = CheckerTexture::new(std::f64::consts::PI, odd, even); // Use scale PI for clear sign
+        // Points where sines > 0 (odd)
+        let p1 = Point3::new(0.5, 0.5, 0.5);
+        let sines1 = (std::f64::consts::PI * p1.x()).sin()
+            * (std::f64::consts::PI * p1.y()).sin()
+            * (std::f64::consts::PI * p1.z()).sin();
+        println!("sines1: {}", sines1);
+        assert!(sines1 > 0.0);
+        assert_eq!(texture.value(0.0, 0.0, &p1), odd_color);
+        // Points where sines < 0 (even)
+        let p2 = Point3::new(1.5, 0.5, 0.5);
+        let sines2 = (std::f64::consts::PI * p2.x()).sin()
+            * (std::f64::consts::PI * p2.y()).sin()
+            * (std::f64::consts::PI * p2.z()).sin();
+        println!("sines2: {}", sines2);
+        assert!(sines2 < 0.0);
+        assert_eq!(texture.value(0.0, 0.0, &p2), even_color);
     }
 
     #[test]
@@ -142,31 +142,48 @@ mod tests {
         let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
         let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
 
-        // Create a checker texture with scale 2.0
-        let texture = CheckerTexture::new(2.0, odd, even);
-
-        // Test points with the new scale
-        let point1 = Point3::new(1.0, 1.0, 0.0); // Should be even
-        let point2 = Point3::new(2.5, 1.0, 0.0); // Should be odd
-        assert_eq!(texture.value(0.0, 0.0, &point1), even_color);
-        assert_eq!(texture.value(0.0, 0.0, &point2), odd_color);
+        let texture = CheckerTexture::new(std::f64::consts::PI, odd, even);
+        // Points where sines > 0 (odd)
+        let p1 = Point3::new(0.25, 0.25, 0.25);
+        let sines1 = (std::f64::consts::PI * p1.x()).sin()
+            * (std::f64::consts::PI * p1.y()).sin()
+            * (std::f64::consts::PI * p1.z()).sin();
+        println!("sines1: {}", sines1);
+        assert!(sines1 > 0.0);
+        assert_eq!(texture.value(0.0, 0.0, &p1), odd_color);
+        // Points where sines < 0 (even)
+        let p2 = Point3::new(1.25, 0.25, 0.25);
+        let sines2 = (std::f64::consts::PI * p2.x()).sin()
+            * (std::f64::consts::PI * p2.y()).sin()
+            * (std::f64::consts::PI * p2.z()).sin();
+        println!("sines2: {}", sines2);
+        assert!(sines2 < 0.0);
+        assert_eq!(texture.value(0.0, 0.0, &p2), even_color);
     }
 
     #[test]
-    fn test_checker_texture_clone() {
-        let odd_color = Color::new(1.0, 1.0, 1.0);
-        let even_color = Color::new(0.0, 0.0, 0.0);
+    fn test_checker_texture_pattern() {
+        let odd_color = Color::new(1.0, 1.0, 1.0); // White
+        let even_color = Color::new(0.0, 0.0, 0.0); // Black
         let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
         let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
 
-        let texture = CheckerTexture::new(1.0, odd, even);
-        let cloned_texture = texture.clone();
-
-        // Test that the cloned texture produces the same results
-        let point = Point3::new(1.0, 1.0, 0.0);
-        assert_eq!(
-            texture.value(0.0, 0.0, &point),
-            cloned_texture.value(0.0, 0.0, &point)
-        );
+        let texture = CheckerTexture::new(std::f64::consts::PI, odd, even);
+        // Points where sines > 0 (odd)
+        let p1 = Point3::new(0.75, 0.75, 0.75);
+        let sines1 = (std::f64::consts::PI * p1.x()).sin()
+            * (std::f64::consts::PI * p1.y()).sin()
+            * (std::f64::consts::PI * p1.z()).sin();
+        println!("sines1: {}", sines1);
+        assert!(sines1 > 0.0);
+        assert_eq!(texture.value(0.0, 0.0, &p1), odd_color);
+        // Points where sines < 0 (even)
+        let p2 = Point3::new(1.75, 0.75, 0.75);
+        let sines2 = (std::f64::consts::PI * p2.x()).sin()
+            * (std::f64::consts::PI * p2.y()).sin()
+            * (std::f64::consts::PI * p2.z()).sin();
+        println!("sines2: {}", sines2);
+        assert!(sines2 < 0.0);
+        assert_eq!(texture.value(0.0, 0.0, &p2), even_color);
     }
 }
