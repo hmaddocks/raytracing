@@ -22,7 +22,7 @@ mod texture;
 mod utilities;
 mod vec3;
 
-fn main() {
+fn bouncing_spheres() -> () {
     // World
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
@@ -139,4 +139,58 @@ fn main() {
         .build();
 
     camera.render(&world as &dyn Hittable);
+}
+
+fn checkered_spheres() -> () {
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
+
+    let checker = CheckerTexture::new(
+        3.0,
+        Box::new(TextureEnum::SolidColor(Color::new(0.2, 0.3, 0.1).into())),
+        Box::new(TextureEnum::SolidColor(Color::new(0.9, 0.9, 0.9).into())),
+    );
+
+    objects.push(Box::new(
+        SphereBuilder::new()
+            .center(Point3::new(0.0, -10.0, 0.0))
+            .radius(10.0)
+            .material(Lambertian::new(Box::new(TextureEnum::CheckerTexture(
+                checker.clone(),
+            ))))
+            .build()
+            .expect("Failed to build ground sphere"),
+    ));
+
+    objects.push(Box::new(
+        SphereBuilder::new()
+            .center(Point3::new(0.0, 10.0, 0.0))
+            .radius(10.0)
+            .material(Lambertian::new(Box::new(TextureEnum::CheckerTexture(
+                checker.clone(),
+            ))))
+            .build()
+            .expect("Failed to build ground sphere"),
+    ));
+
+    let world = Bvh::new(objects).expect("Failed to create BVH");
+
+    let camera = camera::CameraBuilder::new()
+        .aspect_ratio(16.0 / 9.0)
+        .image_width(800)
+        .samples_per_pixel(100)
+        .max_depth(50)
+        .vertical_fov(20.0)
+        .look_from(Point3::new(13.0, 2.0, 3.0))
+        .look_at(Point3::new(0.0, 0.0, 0.0))
+        .vup(Vec3::new(0.0, 1.0, 0.0))
+        .defocus_angle(0.0)
+        .focus_dist(10.0)
+        .build();
+
+    camera.render(&world as &dyn Hittable);
+}
+
+fn main() {
+    // bouncing_spheres();
+    checkered_spheres();
 }
