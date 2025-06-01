@@ -71,9 +71,11 @@ impl Lambertian {
         }
         let time = ray.time();
         let scatter = Ray::new(hit_record.position, scatter_direction, time);
-        let attenuation = self
-            .texture
-            .value(hit_record.u, hit_record.v, &hit_record.position);
+        let attenuation = self.texture.value(
+            hit_record.texture_coords.0,
+            hit_record.texture_coords.1,
+            &hit_record.position,
+        );
         (attenuation, scatter)
     }
 }

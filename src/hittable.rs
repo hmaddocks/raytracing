@@ -10,10 +10,9 @@ pub struct HitRecord<'a> {
     pub position: Point3,
     pub normal: Vec3,
     pub t: f64,
-    pub u: f64,
-    pub v: f64,
     pub front_face: bool,
     pub material: Option<&'a Material>,
+    pub texture_coords: (f64, f64),
 }
 
 pub trait Hittable: Send + Sync {
@@ -41,10 +40,9 @@ impl Default for HitRecord<'_> {
             position: Point3::default(),
             normal: Vec3::default(),
             t: 0.0,
-            u: 0.0,
-            v: 0.0,
             front_face: false,
             material: None,
+            texture_coords: (0.0, 0.0),
         }
     }
 }

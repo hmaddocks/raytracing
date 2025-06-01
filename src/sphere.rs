@@ -260,7 +260,7 @@ impl MovingSphere {
             + (self.center.1 - self.center.0) * (time - self.time.0) / (self.time.1 - self.time.0)
     }
 
-    fn get_sphere_uv(point: Point3) -> (f64, f64) {
+    fn get_sphere_uv(point: Vec3) -> (f64, f64) {
         // p: a given point on the sphere of radius one, centered at the origin.
         // u: returned value [0,1] of angle around the Y axis from X=-1.
         // v: returned value [0,1] of angle from Y=-1 to Y=+1.
@@ -320,17 +320,15 @@ impl Hittable for MovingSphere {
         // Calculate outward normal at hit point (normalized vector from center to hit point)
         let outward_normal = (position - current_center) / self.radius;
 
-        let (u, v) = Self::get_sphere_uv(position);
+        let texture_coords = Self::get_sphere_uv(outward_normal);
         // Create hit record and set the normal based on ray direction
         let mut hit_record = HitRecord {
             t: root,
             position,
             normal: Vec3::default(),
             front_face: true,
-            u,
-            v,
             material: Some(&self.material),
-            ..Default::default()
+            texture_coords,
         };
 
         hit_record.set_face_normal(ray, &outward_normal);
