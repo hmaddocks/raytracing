@@ -211,7 +211,7 @@ impl Sphere {
             t: root,
             position,
             front_face: true,
-            material: Some(self.material.clone()),
+            material: Some(&self.material),
             ..Default::default()
         };
 
@@ -327,9 +327,9 @@ impl Hittable for MovingSphere {
             position,
             normal: Vec3::default(),
             front_face: true,
-            material: Some(self.material.clone()),
             u,
             v,
+            material: Some(&self.material),
             ..Default::default()
         };
 

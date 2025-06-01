@@ -185,7 +185,7 @@ mod tests {
     use crate::texture::SolidColor;
 
     // Helper function to create a HitRecord for testing
-    fn create_hit_record(position: Point3, normal: Vec3, material: Option<Material>) -> HitRecord {
+    fn create_hit_record(position: Point3, normal: Vec3, material: Option<&Material>) -> HitRecord {
         let hit_record = HitRecord {
             position,
             normal,
@@ -223,7 +223,8 @@ mod tests {
         let hit_point = Point3::new(0.0, 0.0, 1.0);
         let normal = Vec3::new(0.0, 0.0, -1.0); // Surface normal pointing back
 
-        let hit_record = create_hit_record(hit_point, normal, Some(material.clone()));
+        let binding = material.clone();
+        let hit_record = create_hit_record(hit_point, normal, Some(&binding));
 
         let (scattered_color, scattered_ray) = match material {
             Material::Lambertian(l) => l.scatter(&ray, &hit_record),
@@ -302,7 +303,8 @@ mod tests {
         let hit_point = Point3::new(1.0, 0.0, 0.0);
         let normal = Vec3::new(0.0, 1.0, 0.0); // Normal points straight up
 
-        let hit_record = create_hit_record(hit_point, normal, Some(material.clone()));
+        let binding = material.clone();
+        let hit_record = create_hit_record(hit_point, normal, Some(&binding));
 
         let (scattered_color, scattered_ray) = match material {
             Material::Metal(m) => m.scatter(&ray, &hit_record),
@@ -342,7 +344,8 @@ mod tests {
         let hit_point = Point3::new(1.0, 0.0, 0.0);
         let normal = Vec3::new(0.0, 1.0, 0.0); // Normal points straight up
 
-        let hit_record = create_hit_record(hit_point, normal, Some(material.clone()));
+        let binding = material.clone();
+        let hit_record = create_hit_record(hit_point, normal, Some(&binding));
 
         let (scattered_color, scattered_ray) = match material {
             Material::Metal(m) => m.scatter(&ray, &hit_record),
@@ -391,7 +394,8 @@ mod tests {
         let hit_point = Point3::new(0.0, 0.0, 1.0);
         let normal = Vec3::new(0.0, 0.0, -1.0);
 
-        let hit_record = create_hit_record(hit_point, normal, Some(material.clone()));
+        let binding = material.clone();
+        let hit_record = create_hit_record(hit_point, normal, Some(&binding));
 
         let (scattered_color, scattered_ray) = match material {
             Material::Test(t) => t.scatter(&ray, &hit_record),
@@ -419,7 +423,8 @@ mod tests {
         let hit_point = Point3::new(0.0, 0.0, 1.0);
         let normal = Vec3::new(0.0, 0.0, -1.0);
 
-        let hit_record = create_hit_record(hit_point, normal, Some(lambertian.clone()));
+        let binding = lambertian.clone();
+        let hit_record = create_hit_record(hit_point, normal, Some(&binding));
 
         // Call scatter through the Material enum
         let (color, _) = lambertian.scatter(&ray, &hit_record);

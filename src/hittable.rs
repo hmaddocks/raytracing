@@ -6,14 +6,14 @@ use crate::ray::Ray;
 use crate::vec3::Vec3;
 
 #[derive(Debug, PartialEq)]
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub position: Point3,
     pub normal: Vec3,
     pub t: f64,
     pub u: f64,
     pub v: f64,
     pub front_face: bool,
-    pub material: Option<Material>,
+    pub material: Option<&'a Material>,
 }
 
 pub trait Hittable: Send + Sync {
@@ -21,7 +21,7 @@ pub trait Hittable: Send + Sync {
     fn bounding_box(&self, time0: f64, time1: f64) -> Option<Aabb>;
 }
 
-impl HitRecord {
+impl HitRecord<'_> {
     /// Sets the HitRecord's normal vector
     ///
     /// The parameter `outward_normal` is assumed to have unit length
@@ -35,7 +35,7 @@ impl HitRecord {
     }
 }
 
-impl Default for HitRecord {
+impl Default for HitRecord<'_> {
     fn default() -> Self {
         Self {
             position: Point3::default(),

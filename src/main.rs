@@ -22,7 +22,7 @@ mod texture;
 mod utilities;
 mod vec3;
 
-fn bouncing_spheres() -> () {
+fn bouncing_spheres() {
     // World
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
@@ -141,7 +141,7 @@ fn bouncing_spheres() -> () {
     camera.render(&world as &dyn Hittable);
 }
 
-fn checkered_spheres() -> () {
+fn checkered_spheres() {
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
     let checker = CheckerTexture::new(
