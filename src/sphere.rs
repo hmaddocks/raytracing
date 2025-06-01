@@ -264,7 +264,7 @@ impl MovingSphere {
         // p: a given point on the sphere of radius one, centered at the origin.
         // u: returned value [0,1] of angle around the Y axis from X=-1.
         // v: returned value [0,1] of angle from Y=-1 to Y=+1.
-        //     <1 0 0> yields <0.50 0.50>       <-1  0  0> yields <0.00 0.50>
+        //     <1 0 0> yields <0.50 0.50>       < -1  0  0> yields <0.00 0.50>
         //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
         //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
 
@@ -504,5 +504,74 @@ mod tests {
 
         // The ray should miss the sphere due to t_min constraint
         assert!(hit_record.is_none());
+    }
+
+    #[test]
+    fn test_get_sphere_uv() {
+        // Test cases from the function documentation
+        let test_cases = vec![
+            (Vec3::new(1.0, 0.0, 0.0), (0.5, 0.5)), // <1 0 0> yields <0.50 0.50>
+            (Vec3::new(-1.0, 0.0, 0.0), (0.0, 0.5)), // < -1 0 0> yields <0.00 0.50>
+            (Vec3::new(0.0, 1.0, 0.0), (0.5, 1.0)), // <0 1 0> yields <0.50 1.00>
+            (Vec3::new(0.0, -1.0, 0.0), (0.5, 0.0)), // <0 -1 0> yields <0.50 0.00>
+            (Vec3::new(0.0, 0.0, 1.0), (0.25, 0.5)), // <0 0 1> yields <0.25 0.50>
+            (Vec3::new(0.0, 0.0, -1.0), (0.75, 0.5)), // <0 0 -1> yields <0.75 0.50>
+        ];
+
+        for (point, expected) in test_cases {
+            let (u, v) = MovingSphere::get_sphere_uv(point);
+            assert!(
+                (u - expected.0).abs() < 1e-6,
+                "U coordinate mismatch for point {:?}: expected {}, got {}",
+                point,
+                expected.0,
+                u
+            );
+            assert!(
+                (v - expected.1).abs() < 1e-6,
+                "V coordinate mismatch for point {:?}: expected {}, got {}",
+                point,
+                expected.1,
+                v
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_sphere_uv_normalized() {
+        // Test that the function works with non-unit vectors
+        let point = Vec3::new(2.0, 0.0, 0.0);
+        let (u, v) = MovingSphere::get_sphere_uv(point);
+        assert!((u - 0.5).abs() < 1e-6);
+        assert!((v - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_get_sphere_uv_range() {
+        // Test that UV coordinates are always in [0,1] range
+        let test_points = vec![
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(-1.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            Vec3::new(0.0, -1.0, 0.0),
+            Vec3::new(0.0, 0.0, 1.0),
+            Vec3::new(0.0, 0.0, -1.0),
+            Vec3::new(0.5, 0.5, 0.5),
+            Vec3::new(-0.5, -0.5, -0.5),
+        ];
+
+        for point in test_points {
+            let (u, v) = MovingSphere::get_sphere_uv(point);
+            assert!(
+                u >= 0.0 && u <= 1.0,
+                "U coordinate out of range [0,1]: {}",
+                u
+            );
+            assert!(
+                v >= 0.0 && v <= 1.0,
+                "V coordinate out of range [0,1]: {}",
+                v
+            );
+        }
     }
 }
