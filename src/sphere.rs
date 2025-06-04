@@ -205,6 +205,7 @@ impl Sphere {
 
         // Calculate outward normal at hit point (normalized vector from center to hit point)
         let outward_normal = (position - current_center) / self.radius;
+        let texture_coords = get_sphere_uv(outward_normal);
 
         // Create hit record and set the normal based on ray direction
         let mut hit_record = HitRecord {
@@ -212,7 +213,8 @@ impl Sphere {
             position,
             front_face: true,
             material: Some(&self.material),
-            ..Default::default()
+            texture_coords,
+            normal: outward_normal,
         };
 
         hit_record.set_face_normal(ray, &outward_normal);
@@ -259,22 +261,21 @@ impl MovingSphere {
         self.center.0
             + (self.center.1 - self.center.0) * (time - self.time.0) / (self.time.1 - self.time.0)
     }
+}
+fn get_sphere_uv(point: Vec3) -> (f64, f64) {
+    // p: a given point on the sphere of radius one, centered at the origin.
+    // u: returned value [0,1] of angle around the Y axis from X=-1.
+    // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+    //     <1 0 0> yields <0.50 0.50>       < -1  0  0> yields <0.00 0.50>
+    //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
+    //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
 
-    fn get_sphere_uv(point: Vec3) -> (f64, f64) {
-        // p: a given point on the sphere of radius one, centered at the origin.
-        // u: returned value [0,1] of angle around the Y axis from X=-1.
-        // v: returned value [0,1] of angle from Y=-1 to Y=+1.
-        //     <1 0 0> yields <0.50 0.50>       < -1  0  0> yields <0.00 0.50>
-        //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
-        //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
+    let theta = (-point.y()).acos();
+    let phi = (-point.z()).atan2(point.x()) + std::f64::consts::PI;
 
-        let theta = (-point.y()).acos();
-        let phi = (-point.z()).atan2(point.x()) + std::f64::consts::PI;
-
-        let u = phi / (2.0 * std::f64::consts::PI);
-        let v = theta / std::f64::consts::PI;
-        (u, v)
-    }
+    let u = phi / (2.0 * std::f64::consts::PI);
+    let v = theta / std::f64::consts::PI;
+    (u, v)
 }
 
 impl Hittable for MovingSphere {
@@ -320,12 +321,12 @@ impl Hittable for MovingSphere {
         // Calculate outward normal at hit point (normalized vector from center to hit point)
         let outward_normal = (position - current_center) / self.radius;
 
-        let texture_coords = Self::get_sphere_uv(outward_normal);
+        let texture_coords = get_sphere_uv(outward_normal);
         // Create hit record and set the normal based on ray direction
         let mut hit_record = HitRecord {
             t: root,
             position,
-            normal: Vec3::default(),
+            normal: outward_normal,
             front_face: true,
             material: Some(&self.material),
             texture_coords,
@@ -519,7 +520,7 @@ mod tests {
         ];
 
         for (point, expected) in test_cases {
-            let (u, v) = MovingSphere::get_sphere_uv(point);
+            let (u, v) = get_sphere_uv(point);
             assert!(
                 (u - expected.0).abs() < 1e-6,
                 "U coordinate mismatch for point {:?}: expected {}, got {}",
@@ -541,7 +542,7 @@ mod tests {
     fn test_get_sphere_uv_normalized() {
         // Test that the function works with non-unit vectors
         let point = Vec3::new(2.0, 0.0, 0.0);
-        let (u, v) = MovingSphere::get_sphere_uv(point);
+        let (u, v) = get_sphere_uv(point);
         assert!((u - 0.5).abs() < 1e-6);
         assert!((v - 0.5).abs() < 1e-6);
     }
@@ -561,7 +562,7 @@ mod tests {
         ];
 
         for point in test_points {
-            let (u, v) = MovingSphere::get_sphere_uv(point);
+            let (u, v) = get_sphere_uv(point);
             assert!(
                 u >= 0.0 && u <= 1.0,
                 "U coordinate out of range [0,1]: {}",
