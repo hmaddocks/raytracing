@@ -199,7 +199,7 @@ impl Camera {
         let offset = Vec3::sample_square();
 
         // Calculate the exact position on the viewport
-        let pixel_sample = self.pixel00_loc
+        let pixel_sample = *self.pixel00_loc
             + (i as f64 + offset.x()) * self.pixel_delta_u
             + (j as f64 + offset.y()) * self.pixel_delta_v;
 
@@ -210,7 +210,7 @@ impl Camera {
             Point3::from(self.defocus_disk_sample())
         };
 
-        let ray_direction = pixel_sample - ray_origin;
+        let ray_direction = pixel_sample - *ray_origin;
         let ray_time = random_double();
         Ray::new(ray_origin, ray_direction, ray_time)
     }

@@ -1,5 +1,6 @@
 use crate::vec3::Vec3;
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::Deref;
+use std::ops::{Add, Sub};
 
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub struct Point3(Vec3);
@@ -37,17 +38,11 @@ impl From<Vec3> for Point3 {
     }
 }
 
-// Same as a move
-impl Add<Vec3> for &Point3 {
-    type Output = Point3;
+impl Deref for Point3 {
+    type Target = Vec3;
 
-    #[inline]
-    fn add(self, other: Vec3) -> Point3 {
-        Point3::new(
-            self.0.x() + other.x(),
-            self.0.y() + other.y(),
-            self.0.z() + other.z(),
-        )
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -64,64 +59,11 @@ impl Add<Vec3> for Point3 {
     }
 }
 
-impl Div<f64> for Point3 {
-    type Output = Point3;
-
-    #[inline]
-    fn div(self, other: f64) -> Point3 {
-        Point3::new(self.x() / other, self.y() / other, self.z() / other)
-    }
-}
-
-impl Mul<Point3> for f64 {
-    type Output = Point3;
-
-    #[inline]
-    fn mul(self, other: Point3) -> Point3 {
-        Point3::new(self * other.x(), self * other.y(), self * other.z())
-    }
-}
-
-impl Mul<f64> for Point3 {
-    type Output = Point3;
-
-    #[inline]
-    fn mul(self, other: f64) -> Point3 {
-        Point3::new(self.x() * other, self.y() * other, self.z() * other)
-    }
-}
-
-impl Sub<Vec3> for &Point3 {
-    type Output = Vec3;
-
-    #[inline]
-    fn sub(self, other: Vec3) -> Vec3 {
-        Vec3::new(
-            self.0.x() - other.x(),
-            self.0.y() - other.y(),
-            self.0.z() - other.z(),
-        )
-    }
-}
-
 impl Sub for Point3 {
     type Output = Vec3;
 
     #[inline]
     fn sub(self, other: Point3) -> Vec3 {
-        Vec3::new(
-            self.x() - other.x(),
-            self.y() - other.y(),
-            self.z() - other.z(),
-        )
-    }
-}
-
-impl Sub for &Point3 {
-    type Output = Vec3;
-
-    #[inline]
-    fn sub(self, other: &Point3) -> Vec3 {
         Vec3::new(
             self.x() - other.x(),
             self.y() - other.y(),
