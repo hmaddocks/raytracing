@@ -47,7 +47,7 @@ impl Aabb {
 
 impl Hittable for Aabb {
     #[inline]
-    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord<'_>> {
         let ray_origin = ray.origin();
         let ray_direction = ray.direction();
 

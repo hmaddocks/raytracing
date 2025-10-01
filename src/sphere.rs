@@ -146,7 +146,7 @@ pub enum SphereType {
 
 impl Hittable for SphereType {
     #[inline]
-    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord<'_>> {
         match self {
             SphereType::Static(sphere) => sphere.hit(ray, ray_t),
             SphereType::Moving(sphere) => sphere.hit(ray, ray_t),
@@ -164,7 +164,7 @@ impl Hittable for SphereType {
 
 impl Sphere {
     #[inline]
-    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord<'_>> {
         // Get the current center based on time (for moving spheres)
         let current_center = self.center;
 
@@ -279,7 +279,7 @@ fn get_sphere_uv(point: Vec3) -> (f64, f64) {
 }
 
 impl Hittable for MovingSphere {
-    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord<'_>> {
         // Get the current center based on time (for moving spheres)
         let current_center = self.center_at(ray.time());
 

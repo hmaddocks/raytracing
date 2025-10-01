@@ -149,7 +149,7 @@ impl Bvh {
 }
 
 impl Hittable for Bvh {
-    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord<'_>> {
         self.tree.hit(r, ray_t)
     }
     fn bounding_box(&self, _time0: f64, _time1: f64) -> Option<Aabb> {
@@ -167,7 +167,7 @@ impl BvhNode {
 }
 
 impl Hittable for BvhNode {
-    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord<'_>> {
         match self {
             BvhNode::Branch { left, right, bbox } => {
                 bbox.hit(r, ray_t)?;
@@ -193,7 +193,7 @@ impl Hittable for BvhNode {
 
 struct DummyHittable;
 impl Hittable for DummyHittable {
-    fn hit(&self, _r: &Ray, _ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, _r: &Ray, _ray_t: Interval) -> Option<HitRecord<'_>> {
         None
     }
     fn bounding_box(&self, _time0: f64, _time1: f64) -> Option<Aabb> {
