@@ -187,16 +187,19 @@ mod tests {
     use crate::texture::SolidColor;
 
     // Helper function to create a HitRecord for testing
-    fn create_hit_record(position: Point3, normal: Vec3, material: Option<&Material>) -> HitRecord {
-        let hit_record = HitRecord {
+    fn create_hit_record(
+        position: Point3,
+        normal: Vec3,
+        material: Option<&Material>,
+    ) -> HitRecord<'_> {
+        HitRecord {
             position,
             normal,
             t: 1.0,
             front_face: true,
             material,
             ..Default::default()
-        };
-        hit_record
+        }
     }
 
     #[test]

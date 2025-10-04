@@ -77,10 +77,6 @@ impl Default for CameraBuilder {
 }
 
 impl CameraBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn aspect_ratio(mut self, aspect_ratio: f64) -> Self {
         self.aspect_ratio = aspect_ratio;
         self
@@ -332,7 +328,7 @@ mod tests {
 
     #[test]
     fn test_camera_builder_custom() {
-        let camera = CameraBuilder::new()
+        let camera = CameraBuilder::default()
             .image_width(200)
             .samples_per_pixel(50)
             .max_depth(5)

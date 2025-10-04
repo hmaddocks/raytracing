@@ -1,4 +1,6 @@
 use crate::bvh::Bvh;
+use crate::camera::Camera;
+use crate::camera::CameraBuilder;
 use crate::color::Color;
 use crate::hittable::Hittable;
 use crate::material::{Dielectric, Lambertian, Metal};
@@ -22,7 +24,7 @@ mod texture;
 mod utilities;
 mod vec3;
 
-fn bouncing_spheres() {
+fn bouncing_spheres() -> Bvh {
     // World
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
@@ -122,26 +124,10 @@ fn bouncing_spheres() {
     ));
 
     // Build BVH from objects
-    let world = Bvh::new(objects).expect("Failed to create BVH");
-
-    // Camera
-    let camera = camera::CameraBuilder::new()
-        .aspect_ratio(16.0 / 9.0)
-        .image_width(800)
-        .samples_per_pixel(100)
-        .max_depth(50)
-        .vertical_fov(20.0)
-        .look_from(Point3::new(13.0, 2.0, 3.0))
-        .look_at(Point3::new(0.0, 0.0, 0.0))
-        .vup(Vec3::new(0.0, 1.0, 0.0))
-        .defocus_angle(1.0)
-        .focus_dist(10.0)
-        .build();
-
-    camera.render(&world as &dyn Hittable);
+    Bvh::new(objects).expect("Failed to create BVH")
 }
 
-fn checkered_spheres() {
+fn checkered_spheres() -> Bvh {
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
     let checker = CheckerTexture::new(
@@ -172,9 +158,11 @@ fn checkered_spheres() {
             .expect("Failed to build ground sphere"),
     ));
 
-    let world = Bvh::new(objects).expect("Failed to create BVH");
+    Bvh::new(objects).expect("Failed to create BVH")
+}
 
-    let camera = camera::CameraBuilder::new()
+fn build_camera() -> Camera {
+    CameraBuilder::default()
         .aspect_ratio(16.0 / 9.0)
         .image_width(800)
         .samples_per_pixel(100)
@@ -185,12 +173,12 @@ fn checkered_spheres() {
         .vup(Vec3::new(0.0, 1.0, 0.0))
         .defocus_angle(0.0)
         .focus_dist(10.0)
-        .build();
-
-    camera.render(&world as &dyn Hittable);
+        .build()
 }
 
 fn main() {
     // bouncing_spheres();
-    checkered_spheres();
+    let world = checkered_spheres();
+    let camera = build_camera();
+    camera.render(&world as &dyn Hittable);
 }
