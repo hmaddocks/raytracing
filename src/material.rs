@@ -1,7 +1,7 @@
 use crate::color::Color;
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
-use crate::texture::{Texture, TextureEnum};
+use crate::texture::BoxTexture;
 use crate::utilities::random_double;
 use crate::vec3::Vec3;
 use std::fmt;
@@ -38,18 +38,18 @@ impl Material {
 /// The color of the material is determined by its texture.
 #[derive(Clone)]
 pub struct Lambertian {
-    texture: Box<TextureEnum>,
+    texture: BoxTexture,
 }
 
 impl fmt::Debug for Lambertian {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Lambertian {{ texture: Box<TextureEnum> }}")
+        write!(f, "Lambertian {{ texture: BoxTexture }}")
     }
 }
 
 impl PartialEq for Lambertian {
     fn eq(&self, _other: &Self) -> bool {
-        // Since TextureEnum doesn't implement PartialEq, we can't compare textures
+        // Since BoxTexture trait objects don't implement PartialEq, we can't compare textures
         // We'll just return false to be safe
         false
     }
@@ -57,7 +57,7 @@ impl PartialEq for Lambertian {
 
 impl Lambertian {
     /// Creates a new Lambertian material with the given texture.
-    pub fn new(texture: Box<TextureEnum>) -> Material {
+    pub fn new(texture: BoxTexture) -> Material {
         Material::Lambertian(Lambertian { texture })
     }
 
@@ -204,15 +204,16 @@ mod tests {
 
     #[test]
     fn test_lambertian_creation() {
-        let texture = TextureEnum::SolidColor(SolidColor::new(Color::new(0.5, 0.5, 0.5)));
-        let material = Lambertian::new(Box::new(texture.clone()));
+        let texture: BoxTexture = Box::new(SolidColor::new(Color::new(0.5, 0.5, 0.5)));
+        let expected_color = Color::new(0.5, 0.5, 0.5);
+        let material = Lambertian::new(texture.clone());
 
         match material {
             Material::Lambertian(l) => {
                 // Check that the material was created successfully
-                assert!(
-                    l.texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0))
-                        == texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0))
+                assert_eq!(
+                    l.texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0)),
+                    expected_color
                 );
             }
             _ => panic!("Expected Lambertian material"),
@@ -221,8 +222,9 @@ mod tests {
 
     #[test]
     fn test_lambertian_scatter() {
-        let texture = TextureEnum::SolidColor(SolidColor::new(Color::new(0.5, 0.5, 0.5)));
-        let material = Lambertian::new(Box::new(texture.clone()));
+        let expected_color = Color::new(0.5, 0.5, 0.5);
+        let texture: BoxTexture = Box::new(SolidColor::new(expected_color));
+        let material = Lambertian::new(texture);
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
         let hit_point = Point3::new(0.0, 0.0, 1.0);
@@ -237,10 +239,7 @@ mod tests {
         };
 
         // Check that the scattered color is the texture color
-        assert_eq!(
-            scattered_color,
-            texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0))
-        );
+        assert_eq!(scattered_color, expected_color);
 
         // Check that the scattered ray originates from the hit point
         assert_eq!(*scattered_ray.origin(), hit_point);
@@ -421,8 +420,9 @@ mod tests {
     fn test_material_enum_scatter() {
         // Test that the Material enum correctly delegates to the appropriate implementation
 
-        let texture = TextureEnum::SolidColor(SolidColor::new(Color::new(0.5, 0.5, 0.5)));
-        let lambertian = Lambertian::new(Box::new(texture.clone()));
+        let expected_color = Color::new(0.5, 0.5, 0.5);
+        let texture: BoxTexture = Box::new(SolidColor::new(expected_color));
+        let lambertian = Lambertian::new(texture);
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0), 0.0);
         let hit_point = Point3::new(0.0, 0.0, 1.0);
@@ -435,6 +435,6 @@ mod tests {
         let (color, _) = lambertian.scatter(&ray, &hit_record);
 
         // Verify we got the right color back
-        assert_eq!(color, texture.value(0.0, 0.0, &Point3::new(0.0, 0.0, 0.0)));
+        assert_eq!(color, expected_color);
     }
 }

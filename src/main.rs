@@ -6,7 +6,7 @@ use crate::hittable::Hittable;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::point3::Point3;
 use crate::sphere::{SphereBuilder, SphereType};
-use crate::texture::{CheckerTexture, TextureEnum};
+use crate::texture::{CheckerTexture, SolidColor};
 use crate::utilities::random_double;
 use crate::vec3::Vec3;
 
@@ -32,12 +32,10 @@ fn bouncing_spheres() -> Bvh {
         SphereBuilder::new()
             .center(Point3::new(0.0, -1000.0, 0.0))
             .radius(1000.0)
-            .material(Lambertian::new(Box::new(TextureEnum::CheckerTexture(
-                CheckerTexture::new(
-                    3.0,
-                    Box::new(TextureEnum::SolidColor(Color::new(1.0, 1.0, 1.0).into())),
-                    Box::new(TextureEnum::SolidColor(Color::new(0.0, 0.0, 0.0).into())),
-                ),
+            .material(Lambertian::new(Box::new(CheckerTexture::new(
+                3.0,
+                Box::new(SolidColor::new(Color::new(1.0, 1.0, 1.0))),
+                Box::new(SolidColor::new(Color::new(0.0, 0.0, 0.0))),
             ))))
             .build()
             .expect("Failed to build ground sphere"),
@@ -58,9 +56,11 @@ fn bouncing_spheres() -> Bvh {
                         .center(center)
                         .center_end(center2)
                         .radius(0.2)
-                        .material(Lambertian::new(Box::new(TextureEnum::SolidColor(
-                            Color::new(random_double(), random_double(), random_double()).into(),
-                        ))))
+                        .material(Lambertian::new(Box::new(SolidColor::new(Color::new(
+                            random_double(),
+                            random_double(),
+                            random_double(),
+                        )))))
                         .time_range(0.0, 1.0)
                         .build()
                     {
@@ -107,9 +107,9 @@ fn bouncing_spheres() -> Bvh {
         SphereBuilder::new()
             .center(Point3::new(-4.0, 1.0, 0.0))
             .radius(1.0)
-            .material(Lambertian::new(Box::new(TextureEnum::SolidColor(
-                Color::new(0.4, 0.2, 0.1).into(),
-            ))))
+            .material(Lambertian::new(Box::new(SolidColor::new(Color::new(
+                0.4, 0.2, 0.1,
+            )))))
             .build()
             .expect("Failed to build brown lambertian sphere"),
     ));
@@ -132,17 +132,15 @@ fn checkered_spheres() -> Bvh {
 
     let checker = CheckerTexture::new(
         3.0,
-        Box::new(TextureEnum::SolidColor(Color::new(0.2, 0.3, 0.1).into())),
-        Box::new(TextureEnum::SolidColor(Color::new(0.9, 0.9, 0.9).into())),
+        Box::new(SolidColor::new(Color::new(0.2, 0.3, 0.1))),
+        Box::new(SolidColor::new(Color::new(0.9, 0.9, 0.9))),
     );
 
     objects.push(Box::new(
         SphereBuilder::new()
             .center(Point3::new(0.0, -10.0, 0.0))
             .radius(10.0)
-            .material(Lambertian::new(Box::new(TextureEnum::CheckerTexture(
-                checker.clone(),
-            ))))
+            .material(Lambertian::new(Box::new(checker.clone())))
             .build()
             .expect("Failed to build ground sphere"),
     ));
@@ -151,9 +149,7 @@ fn checkered_spheres() -> Bvh {
         SphereBuilder::new()
             .center(Point3::new(0.0, 10.0, 0.0))
             .radius(10.0)
-            .material(Lambertian::new(Box::new(TextureEnum::CheckerTexture(
-                checker.clone(),
-            ))))
+            .material(Lambertian::new(Box::new(checker.clone())))
             .build()
             .expect("Failed to build ground sphere"),
     ));

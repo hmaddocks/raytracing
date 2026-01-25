@@ -1,20 +1,8 @@
 use crate::color::Color;
 use crate::point3::Point3;
 
-#[derive(Clone)]
-pub enum TextureEnum {
-    SolidColor(SolidColor),
-    CheckerTexture(CheckerTexture),
-}
-
-impl Texture for TextureEnum {
-    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
-        match self {
-            TextureEnum::SolidColor(t) => t.value(u, v, p),
-            TextureEnum::CheckerTexture(t) => t.value(u, v, p),
-        }
-    }
-}
+/// A type alias for boxed texture trait objects.
+pub type BoxTexture = Box<dyn Texture>;
 
 /// A trait representing a texture that can be applied to surfaces.
 /// Textures are used to determine the color of a point on a surface
@@ -26,7 +14,13 @@ pub trait Texture: Send + Sync {
     /// * `u` - The U coordinate in texture space
     /// * `v` - The V coordinate in texture space
     /// * `p` - The point in 3D space
-    fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color;
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color;
+
+    /// Creates a boxed clone of this texture.
+    ///
+    /// This method enables cloning of trait objects, which is necessary
+    /// for textures that contain other textures (like CheckerTexture).
+    fn box_clone(&self) -> BoxTexture;
 }
 
 /// A texture that returns a constant color regardless of position or UV coordinates.
@@ -56,13 +50,21 @@ impl Texture for SolidColor {
     fn value(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
         self.color
     }
+
+    fn box_clone(&self) -> BoxTexture {
+        Box::new(self.clone())
+    }
 }
 
+/// A 3D checkerboard texture that alternates between two textures based on position.
+///
+/// The pattern is determined by the sign of `sin(scale * x) * sin(scale * y) * sin(scale * z)`.
+/// When positive, the `odd` texture is used; when negative or zero, the `even` texture is used.
 #[derive(Clone)]
 pub struct CheckerTexture {
     pub scale: f64,
-    pub odd: Box<TextureEnum>,
-    pub even: Box<TextureEnum>,
+    pub odd: BoxTexture,
+    pub even: BoxTexture,
 }
 
 impl CheckerTexture {
@@ -75,21 +77,32 @@ impl CheckerTexture {
     ///
     /// # Panics
     /// Panics if `scale` is not positive.
-    pub fn new(scale: f64, odd: Box<TextureEnum>, even: Box<TextureEnum>) -> Self {
+    pub fn new(scale: f64, odd: BoxTexture, even: BoxTexture) -> Self {
         assert!(scale > 0.0, "Scale must be positive");
         Self { scale, odd, even }
     }
 }
 
 impl Texture for CheckerTexture {
-    fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
         let sines =
             (self.scale * p.x()).sin() * (self.scale * p.y()).sin() * (self.scale * p.z()).sin();
         if sines > 0.0 {
-            self.odd.value(_u, _v, p)
+            self.odd.value(u, v, p)
         } else {
-            self.even.value(_u, _v, p)
+            self.even.value(u, v, p)
         }
+    }
+
+    fn box_clone(&self) -> BoxTexture {
+        Box::new(self.clone())
+    }
+}
+
+// Implement Clone manually for CheckerTexture to handle BoxTexture cloning
+impl Clone for BoxTexture {
+    fn clone(&self) -> Self {
+        self.box_clone()
     }
 }
 
@@ -113,8 +126,8 @@ mod tests {
     fn test_checker_texture() {
         let odd_color = Color::new(1.0, 1.0, 1.0); // White
         let even_color = Color::new(0.0, 0.0, 0.0); // Black
-        let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
-        let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
+        let odd: BoxTexture = Box::new(SolidColor::new(odd_color));
+        let even: BoxTexture = Box::new(SolidColor::new(even_color));
 
         let texture = CheckerTexture::new(std::f64::consts::PI, odd, even); // Use scale PI for clear sign
         // Points where sines > 0 (odd)
@@ -139,8 +152,8 @@ mod tests {
     fn test_checker_texture_scale() {
         let odd_color = Color::new(1.0, 1.0, 1.0);
         let even_color = Color::new(0.0, 0.0, 0.0);
-        let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
-        let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
+        let odd: BoxTexture = Box::new(SolidColor::new(odd_color));
+        let even: BoxTexture = Box::new(SolidColor::new(even_color));
 
         let texture = CheckerTexture::new(std::f64::consts::PI, odd, even);
         // Points where sines > 0 (odd)
@@ -165,8 +178,8 @@ mod tests {
     fn test_checker_texture_pattern() {
         let odd_color = Color::new(1.0, 1.0, 1.0); // White
         let even_color = Color::new(0.0, 0.0, 0.0); // Black
-        let odd = Box::new(TextureEnum::SolidColor(SolidColor::new(odd_color)));
-        let even = Box::new(TextureEnum::SolidColor(SolidColor::new(even_color)));
+        let odd: BoxTexture = Box::new(SolidColor::new(odd_color));
+        let even: BoxTexture = Box::new(SolidColor::new(even_color));
 
         let texture = CheckerTexture::new(std::f64::consts::PI, odd, even);
         // Points where sines > 0 (odd)
@@ -185,5 +198,35 @@ mod tests {
         println!("sines2: {}", sines2);
         assert!(sines2 < 0.0);
         assert_eq!(texture.value(0.0, 0.0, &p2), even_color);
+    }
+
+    #[test]
+    fn test_texture_cloning() {
+        let color = Color::new(0.5, 0.3, 0.1);
+        let texture: BoxTexture = Box::new(SolidColor::new(color));
+        let cloned = texture.clone();
+        let point = Point3::new(1.0, 2.0, 3.0);
+
+        assert_eq!(
+            texture.value(0.0, 0.0, &point),
+            cloned.value(0.0, 0.0, &point)
+        );
+    }
+
+    #[test]
+    fn test_checker_texture_cloning() {
+        let odd_color = Color::new(1.0, 1.0, 1.0);
+        let even_color = Color::new(0.0, 0.0, 0.0);
+        let odd: BoxTexture = Box::new(SolidColor::new(odd_color));
+        let even: BoxTexture = Box::new(SolidColor::new(even_color));
+
+        let texture = CheckerTexture::new(std::f64::consts::PI, odd, even);
+        let cloned = texture.clone();
+        let point = Point3::new(0.5, 0.5, 0.5);
+
+        assert_eq!(
+            texture.value(0.0, 0.0, &point),
+            cloned.value(0.0, 0.0, &point)
+        );
     }
 }
